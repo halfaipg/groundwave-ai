@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <!-- Status + Weather Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
+        <!-- Network Status -->
+        <div class="glass rounded-xl sm:rounded-2xl p-6 sm:p-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base sm:text-lg font-semibold text-white">Network Status</h2>
+                <div class="flex items-center space-x-2" id="connection-status">
+                    <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+                    <span class="text-xs text-gray-400">Checking...</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <a href="#nodes-section" class="text-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition cursor-pointer">
+                    <div class="text-3xl font-bold text-mesh-400" id="stat-nodes">--</div>
+                    <div class="text-gray-500 text-sm mt-1">Nodes Seen</div>
+                </a>
+                <div class="text-center p-4 bg-white/5 rounded-xl">
+                    <div class="text-3xl font-bold text-mesh-400" id="stat-online">--</div>
+                    <div class="text-gray-500 text-sm mt-1">Online Now</div>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/10 text-sm text-gray-400 space-y-2">
+                <div class="flex justify-between">
+                    <span>Last Activity</span>
+                    <span id="last-activity">--</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Gateway Node</span>
+                    <span class="text-mesh-400 font-mono">{{ bot_short_name }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Location</span>
+                    <span>{{ location_name }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Frequency</span>
+                    <span>906.875 MHz (US)</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Messages Today</span>
+                    <span id="messages-today">--</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Weather Widget -->
+        <div class="glass rounded-xl sm:rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+            <!-- Background Weather Icon (hidden until loaded) -->
+            <div class="absolute right-4 -top-4 w-36 h-36 sm:w-44 sm:h-44 opacity-15 pointer-events-none hidden" id="weather-icon-bg">
+                <img id="weather-icon-img" src="" alt="" class="w-full h-full">
+            </div>
+            
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base sm:text-lg font-semibold text-white">{{ location_name }} Weather</h2>
+                    <span class="text-xs text-gray-500" id="weather-updated">Loading...</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-4xl sm:text-5xl font-bold text-white" id="weather-temp">--°F</div>
+                        <div class="text-gray-400 mt-1" id="weather-condition">Loading...</div>
+                    </div>
+                    <div class="text-right text-sm text-gray-400">
+                        <div id="weather-humidity">Humidity: --%</div>
+                        <div id="weather-wind">Wind: -- mph</div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-2">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                        <span class="text-xs text-gray-400 uppercase tracking-widest">3-Day Forecast</span>
+                        <div class="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 text-center" id="weather-forecast">
+                        <div class="text-gray-400">--</div>
+                        <div class="text-gray-400">--</div>
+                        <div class="text-gray-400">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Nodes Table - Full Width -->
+    <div class="glass rounded-xl sm:rounded-2xl overflow-hidden mb-6" id="nodes-section">
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10 flex items-center justify-between">
+            <h2 class="text-base sm:text-lg font-semibold text-white">Mesh Nodes</h2>
+            <span class="text-xs sm:text-sm text-gray-500" id="nodes-count">{{ nodes|length }} discovered</span>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-white/5 text-xs text-gray-400 uppercase tracking-wider">
+                    <tr>
+                        <th class="px-4 py-3 text-left w-8"></th>
+                        <th class="px-4 py-3 text-left">Node</th>
+                        <th class="px-4 py-3 text-left">ID</th>
+                        <th class="px-4 py-3 text-left hidden md:table-cell">Hardware</th>
+                        <th class="px-4 py-3 text-left">Battery</th>
+                        <th class="px-4 py-3 text-left hidden sm:table-cell">SNR</th>
+                        <th class="px-4 py-3 text-left hidden lg:table-cell">Location</th>
+                        <th class="px-4 py-3 text-left">Heard</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for node in nodes %}
+                    <tr class="hover:bg-white/5 transition">
+                        <td class="px-4 py-3">
+                            <span class="w-2.5 h-2.5 rounded-full inline-block {% if node.is_online %}bg-mesh-500 pulse-dot{% else %}bg-gray-600{% endif %}"></span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <span class="text-white font-semibold">{{ node.short_name or '?' }}</span>
+                                {% if node.hops_away is not none %}
+                                <span class="text-xs px-1.5 py-0.5 rounded bg-white/10 text-gray-400">
+                                    {% if node.hops_away == 0 %}Direct{% elif node.hops_away == 1 %}1 hop{% else %}{{ node.hops_away }} hops{% endif %}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="text-gray-500 text-xs truncate max-w-[200px]">{{ node.long_name or 'Unknown' }}</div>
+                        </td>
+                        <td class="px-4 py-3 font-mono text-gray-500 text-xs">{{ node.node_id }}</td>
+                        <td class="px-4 py-3 text-gray-500 hidden md:table-cell">{{ node.hardware.replace('_', ' ').title() if node.hardware else '-' }}</td>
+                        <td class="px-4 py-3">
+                            {% if node.battery_level and node.battery_level <= 100 %}
+                            <span class="{% if node.battery_level > 50 %}text-mesh-400{% elif node.battery_level > 20 %}text-yellow-400{% else %}text-red-400{% endif %}">
+                                {{ node.battery_level }}%
+                            </span>
+                            {% elif node.battery_level and node.battery_level > 100 %}
+                            <span class="text-mesh-400">AC</span>
+                            {% else %}
+                            <span class="text-gray-600">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">
+                            {% if node.snr %}{{ "%.1f"|format(node.snr) }} dB{% else %}-{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 text-xs hidden lg:table-cell">
+                            {% if node.latitude and node.longitude %}
+                            {{ "%.4f"|format(node.latitude) }}, {{ "%.4f"|format(node.longitude) }}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-gray-500">
+                            {% if node.last_heard %}{{ node.last_heard.strftime('%H:%M') }}{% else %}-{% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                            No nodes discovered yet
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Regional MQTT Network -->
+    <div class="glass rounded-xl sm:rounded-2xl overflow-hidden mb-6 border border-amber-500/20" id="regional-section">
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-amber-500/20 bg-amber-500/5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-amber-400">🌐</span>
+                <h2 class="text-base sm:text-lg font-semibold text-amber-300">{{ mqtt_region_name }} MQTT Network</h2>
+            </div>
+            <span class="text-xs sm:text-sm text-amber-400/70" id="regional-stats">0 nodes</span>
+        </div>
+        
+        <div class="max-h-64 overflow-y-auto" id="regional-nodes">
+            <div class="px-6 py-8 text-center text-gray-500 text-sm">
+                <svg class="w-8 h-8 mx-auto mb-2 text-amber-600/30" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3C7.46 3 3.34 4.78.29 7.67c-.18.18-.29.43-.29.71 0 .28.11.53.29.71l11.7 11.7c.18.18.43.29.71.29.28 0 .53-.11.71-.29l11.7-11.7c.18-.18.29-.43.29-.71 0-.28-.11-.53-.29-.71C20.66 4.78 16.54 3 12 3z"/></svg>
+                Listening for regional nodes...
+            </div>
+        </div>
+        
+        <!-- Regional Messages -->
+        <div class="border-t border-white/10">
+            <div class="px-4 sm:px-6 py-2 bg-amber-500/5 flex items-center justify-between">
+                <span class="text-sm font-medium text-amber-400">💬 Regional Messages</span>
+                <span class="text-xs text-gray-500" id="regional-msg-count">0 messages</span>
+            </div>
+            <div class="max-h-48 overflow-y-auto" id="regional-messages">
+                <div class="px-6 py-6 text-center text-gray-500 text-sm">
+                    Waiting for messages from regional network...
+                </div>
+            </div>
+        </div>
+        
+        <!-- ELI5 Explanation -->
+        <div class="px-4 py-3 border-t border-amber-500/10 bg-amber-500/5">
+            <div class="flex items-start gap-2">
+                <span class="text-amber-400 text-sm">ℹ️</span>
+                <div class="text-xs text-gray-400 leading-relaxed">
+                    <strong class="text-amber-400">What is MQTT?</strong> This is data from a regional Meshtastic network, 
+                    pulled via the internet (not radio). Think of it like a live feed from a bigger mesh community. 
+                    <span class="text-amber-500/70">Requires internet</span> — your radio can't reach these nodes directly, 
+                    but you can see what's happening across the region.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Activity & BBS Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <!-- Recent Activity -->
+        <div class="glass rounded-xl sm:rounded-2xl overflow-hidden">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10">
+                <h2 class="text-base sm:text-lg font-semibold text-white">Recent Activity</h2>
+            </div>
+            
+            <div class="max-h-64 overflow-y-auto" id="activity-feed">
+                {% for msg in messages %}
+                {% if not msg.is_direct %}
+                <div class="px-4 sm:px-6 py-3 border-b border-white/5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-300">
+                            {% if msg.is_from_bot %}
+                            🤖 Bot responded
+                            {% else %}
+                            📡 Broadcast from {{ msg.from_name or msg.from_id[:8] }}
+                            {% endif %}
+                        </span>
+                        <span class="text-xs text-gray-500">{{ msg.timestamp.strftime('%H:%M') if msg.timestamp else '' }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="px-6 py-8 text-center text-gray-500 text-sm">
+                    No recent activity
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- BBS Preview -->
+        <div class="glass rounded-xl sm:rounded-2xl overflow-hidden">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10 flex items-center justify-between">
+                <h2 class="text-base sm:text-lg font-semibold text-white">Bulletin Board</h2>
+                <span class="text-xs sm:text-sm text-gray-500">{{ bbs_posts|length }}</span>
+            </div>
+            
+            <div class="max-h-64 overflow-y-auto">
+                {% for post in bbs_posts[:5] %}
+                <div class="px-4 sm:px-6 py-3 border-b border-white/5 hover:bg-white/5 transition">
+                    <div class="flex items-center justify-between">
+                        <span class="text-white text-sm">{{ post.from_name or post.from_id[:8] }}</span>
+                        <span class="text-gray-500 text-xs">{{ post.created_at.strftime('%m/%d') if post.created_at else '' }}</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-1 truncate">{{ post.content }}</p>
+                </div>
+                {% else %}
+                <div class="px-6 py-8 text-center text-gray-500 text-sm">
+                    No posts yet
+                </div>
+                {% endfor %}
+            </div>
+            
+            <a href="/bbs" class="block px-6 py-3 text-center text-mesh-400 hover:text-mesh-300 text-sm border-t border-white/10">
+                View All Posts →
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Check if it's currently nighttime (between 7pm and 6am)
+    function isNighttime() {
+        const hour = new Date().getHours();
+        return hour >= 19 || hour < 6;
+    }
+    
+    // Map WMO weather codes to local icon files
+    // https://open-meteo.com/en/docs (WMO Weather interpretation codes)
+    function getWeatherIconPath(code) {
+        const night = isNighttime();
+        
+        // 0 = Clear sky
+        if (code === 0) return night ? '/static/weather-icons/clear-night.svg' : '/static/weather-icons/clear-day.svg';
+        
+        // 1 = Mainly clear (mostly clear with light haze/wisp)
+        if (code === 1) return night ? '/static/weather-icons/mostly-clear-night.svg' : '/static/weather-icons/mostly-clear-day.svg';
+        
+        // 2 = Partly cloudy
+        if (code === 2) return night ? '/static/weather-icons/partly-cloudy-night.svg' : '/static/weather-icons/partly-cloudy-day.svg';
+        
+        // 3 = Overcast
+        if (code === 3) return '/static/weather-icons/overcast.svg';
+        
+        // 45, 48 = Fog, Depositing rime fog
+        if (code === 45 || code === 48) return '/static/weather-icons/fog.svg';
+        
+        // 51, 53, 55 = Drizzle (light, moderate, dense)
+        if (code >= 51 && code <= 55) return '/static/weather-icons/drizzle.svg';
+        
+        // 56, 57 = Freezing drizzle
+        if (code === 56 || code === 57) return '/static/weather-icons/drizzle.svg';
+        
+        // 61, 63, 65 = Rain (slight, moderate, heavy)
+        if (code >= 61 && code <= 65) return '/static/weather-icons/rain.svg';
+        
+        // 66, 67 = Freezing rain
+        if (code === 66 || code === 67) return '/static/weather-icons/rain.svg';
+        
+        // 71, 73, 75 = Snow fall (slight, moderate, heavy)
+        if (code >= 71 && code <= 75) return '/static/weather-icons/snow.svg';
+        
+        // 77 = Snow grains
+        if (code === 77) return '/static/weather-icons/snow.svg';
+        
+        // 80, 81, 82 = Rain showers (slight, moderate, violent)
+        if (code >= 80 && code <= 82) return '/static/weather-icons/rain.svg';
+        
+        // 85, 86 = Snow showers (slight, heavy)
+        if (code === 85 || code === 86) return '/static/weather-icons/snow.svg';
+        
+        // 95 = Thunderstorm (slight or moderate)
+        if (code === 95) return '/static/weather-icons/thunderstorms-rain.svg';
+        
+        // 96, 99 = Thunderstorm with hail
+        if (code === 96 || code === 99) return '/static/weather-icons/thunderstorms-rain.svg';
+        
+        // Fallback
+        return '/static/weather-icons/cloudy.svg';
+    }
+
+    // Fetch and display weather
+    async function loadWeather() {
+        try {
+            const response = await fetch('/api/weather');
+            const data = await response.json();
+            
+            if (data.current) {
+                document.getElementById('weather-temp').textContent = Math.round(data.current.temp) + '°F';
+                document.getElementById('weather-condition').textContent = data.current.condition;
+                document.getElementById('weather-humidity').textContent = 'Humidity: ' + data.current.humidity + '%';
+                document.getElementById('weather-wind').textContent = 'Wind: ' + data.current.wind + ' mph';
+                document.getElementById('weather-updated').textContent = 'Updated just now';
+                
+                // Show and update background icon
+                const iconBg = document.getElementById('weather-icon-bg');
+                const iconImg = document.getElementById('weather-icon-img');
+                iconImg.src = getWeatherIconPath(data.current.code);
+                iconBg.classList.remove('hidden');
+            }
+            
+            if (data.forecast) {
+                const forecastEl = document.getElementById('weather-forecast');
+                forecastEl.innerHTML = data.forecast.map(day => `
+                    <div>
+                        <div class="text-gray-300 text-base">${day.day}</div>
+                        <div class="my-2"><img src="${getWeatherIconPath(day.code)}" class="w-14 h-14 mx-auto"></div>
+                        <div class="text-white text-lg font-medium">${day.high}°</div>
+                        <div class="text-gray-500 text-sm">${day.low}°</div>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            console.error('Failed to load weather:', e);
+        }
+    }
+    
+    // Fetch and display stats
+    async function loadStats() {
+        try {
+            const response = await fetch('/api/status');
+            const data = await response.json();
+            
+            document.getElementById('stat-nodes').textContent = data.node_count || 0;
+            document.getElementById('stat-online').textContent = data.online_count !== undefined ? data.online_count : 0;
+            document.getElementById('nodes-count').textContent = data.node_count || 0;
+            document.getElementById('last-activity').textContent = 'Just now';
+            document.getElementById('messages-today').textContent = data.message_count || 0;
+            
+            // Update connection status indicator
+            const statusEl = document.getElementById('connection-status');
+            const state = data.connection_state || (data.connected ? 'connected' : 'disconnected');
+            
+            if (state === 'connected') {
+                statusEl.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-mesh-500 pulse-dot"></span>
+                    <span class="text-xs text-mesh-400">Online</span>
+                `;
+            } else if (state === 'connecting') {
+                statusEl.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-yellow-500 pulse-dot"></span>
+                    <span class="text-xs text-yellow-400">Reconnecting...</span>
+                `;
+            } else {
+                statusEl.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span class="text-xs text-red-400">Offline</span>
+                `;
+            }
+        } catch (e) {
+            console.error('Failed to load stats:', e);
+            // Show error state
+            const statusEl = document.getElementById('connection-status');
+            statusEl.innerHTML = `
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                <span class="text-xs text-red-400">Error</span>
+            `;
+        }
+    }
+    
+    // Load regional MQTT data
+    async function loadRegional() {
+        try {
+            const [statsRes, nodesRes, msgsRes] = await Promise.all([
+                fetch('/api/regional/stats'),
+                fetch('/api/regional/nodes'),
+                fetch('/api/regional/messages?limit=30')
+            ]);
+            
+            const stats = await statsRes.json();
+            const nodes = await nodesRes.json();
+            const messages = await msgsRes.json();
+            
+            // Update stats
+            const nodeCount = stats.node_count || 0;
+            document.getElementById('regional-stats').textContent = 
+                `${nodeCount} node${nodeCount !== 1 ? 's' : ''}`;
+            
+            // Render nodes
+            const nodesEl = document.getElementById('regional-nodes');
+            if (nodes.length === 0) {
+                nodesEl.innerHTML = `
+                    <div class="px-6 py-8 text-center text-gray-500 text-sm">
+                        <svg class="w-8 h-8 mx-auto mb-2 text-amber-600/50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3C7.46 3 3.34 4.78.29 7.67c-.18.18-.29.43-.29.71 0 .28.11.53.29.71l11.7 11.7c.18.18.43.29.71.29.28 0 .53-.11.71-.29l11.7-11.7c.18-.18.29-.43.29-.71 0-.28-.11-.53-.29-.71C20.66 4.78 16.54 3 12 3z"/></svg>
+                        ${stats.connected ? 'Listening for regional nodes...' : 'Waiting for connection...'}
+                    </div>
+                `;
+            } else {
+                nodesEl.innerHTML = nodes.map(n => `
+                    <div class="px-4 sm:px-6 py-3 border-b border-white/5 hover:bg-amber-500/5 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-3">
+                                <span class="w-2 h-2 rounded-full mt-1.5 bg-amber-500/50"></span>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-white font-medium">${n.short_name || n.node_id.slice(-6)}</span>
+                                        <span class="text-xs px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400/70">Regional</span>
+                                    </div>
+                                    ${n.long_name ? `<div class="text-gray-400 text-sm">${n.long_name}</div>` : ''}
+                                    <div class="text-xs text-gray-600 font-mono">${n.node_id}</div>
+                                </div>
+                            </div>
+                            <div class="text-right text-xs text-gray-500">
+                                ${n.last_rssi ? `<div>${n.last_rssi} dBm</div>` : ''}
+                                ${n.last_snr ? `<div>${n.last_snr.toFixed(1)} dB SNR</div>` : ''}
+                                ${n.latitude ? `<div class="text-gray-600">📍 ${n.latitude.toFixed(2)}, ${n.longitude.toFixed(2)}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Render regional messages
+            const msgsEl = document.getElementById('regional-messages');
+            const msgCount = stats.text_messages || 0;
+            document.getElementById('regional-msg-count').textContent = 
+                `${msgCount} total`;
+            
+            if (messages.length === 0) {
+                msgsEl.innerHTML = `
+                    <div class="px-6 py-6 text-center text-gray-500 text-sm">
+                        ${stats.connected ? 'Waiting for regional messages...' : 'Connecting...'}
+                    </div>
+                `;
+            } else {
+                msgsEl.innerHTML = messages.map(m => {
+                    const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                    return `
+                        <div class="px-4 sm:px-6 py-2 border-b border-white/5 hover:bg-amber-500/5 transition">
+                            <div class="flex items-start gap-2">
+                                <span class="text-amber-400 font-medium text-sm shrink-0">${m.sender_name || m.sender.slice(0,6)}</span>
+                                <span class="text-gray-300 text-sm flex-1 break-words">${escapeHtml(m.text)}</span>
+                                <span class="text-xs text-gray-600 shrink-0">${time}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+        } catch (e) {
+            console.error('Failed to load regional data:', e);
+        }
+    }
+    
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        loadWeather();
+        loadStats();
+        loadRegional();
+    });
+    
+    // Refresh periodically
+    setInterval(loadStats, 30000);
+    setInterval(loadWeather, 300000); // 5 min
+    setInterval(loadRegional, 60000); // 1 min for regional
+</script>
+{% endblock %}

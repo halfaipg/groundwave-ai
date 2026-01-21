@@ -1,0 +1,541 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Admin Panel</h1>
+            <p class="text-gray-400 text-sm mt-1">Configure your mesh node</p>
+        </div>
+        <a href="/admin/logout" class="px-4 py-2 rounded-lg bg-white/10 text-gray-300 hover:bg-white/20 transition text-sm">
+            Sign Out
+        </a>
+    </div>
+    
+    <!-- Status Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div class="glass rounded-xl p-4">
+            <div class="text-gray-400 text-xs mb-1">Connection</div>
+            <div class="text-lg font-bold {% if is_connected %}text-green-400{% else %}text-red-400{% endif %}">
+                {{ 'Online' if is_connected else 'Offline' }}
+            </div>
+        </div>
+        <div class="glass rounded-xl p-4">
+            <div class="text-gray-400 text-xs mb-1">Messages</div>
+            <div class="text-lg font-bold text-white">{{ message_count }}</div>
+        </div>
+        <div class="glass rounded-xl p-4">
+            <div class="text-gray-400 text-xs mb-1">Nodes</div>
+            <div class="text-lg font-bold text-mesh-400">{{ node_count }}</div>
+        </div>
+        <div class="glass rounded-xl p-4">
+            <div class="text-gray-400 text-xs mb-1">Protocol</div>
+            <div class="text-lg font-bold text-blue-400">{{ config.mesh.protocol }}</div>
+        </div>
+    </div>
+    
+    <!-- Alert for unsaved changes -->
+    <div id="unsaved-alert" class="hidden mb-6 p-4 rounded-xl bg-amber-500/20 border border-amber-500/30">
+        <div class="flex items-center gap-3">
+            <span class="text-amber-400">Changes saved to config. Restart required to apply.</span>
+            <button onclick="window.location.reload()" class="px-3 py-1 rounded bg-amber-500 text-black text-sm font-medium hover:bg-amber-400">
+                Refresh
+            </button>
+        </div>
+    </div>
+    
+    <!-- Config Sections -->
+    <div class="space-y-6">
+        
+        <!-- Branding Section -->
+        <div class="glass rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-white">Community Branding</h2>
+                <button onclick="saveBranding()" class="px-4 py-2 rounded-lg bg-mesh-500 text-white text-sm font-medium hover:bg-mesh-400 transition">
+                    Save
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Community Name</label>
+                    <input type="text" id="community_name" value="{{ config.web.community_name }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Location Name</label>
+                    <input type="text" id="location_name" value="{{ config.web.location_name }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm text-gray-400 mb-1">Community Description</label>
+                    <input type="text" id="community_description" value="{{ config.web.community_description }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Bot Short Name (mesh ID)</label>
+                    <input type="text" id="bot_short_name" value="{{ config.mesh.bot_short_name }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Bot Long Name</label>
+                    <input type="text" id="bot_long_name" value="{{ config.mesh.bot_name }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mesh Connection Section -->
+        <div class="glass rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-white">Mesh Connection</h2>
+                <div class="flex gap-2">
+                    <button onclick="testMesh()" class="px-4 py-2 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition">
+                        Test
+                    </button>
+                    <button onclick="saveMesh()" class="px-4 py-2 rounded-lg bg-mesh-500 text-white text-sm font-medium hover:bg-mesh-400 transition">
+                        Save
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Protocol</label>
+                    <select id="mesh_protocol" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                        <option value="meshtastic" {% if config.mesh.protocol == 'meshtastic' %}selected{% endif %}>Meshtastic</option>
+                        <option value="meshcore" {% if config.mesh.protocol == 'meshcore' %}selected{% endif %}>MeshCore</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Connection Type</label>
+                    <select id="mesh_connection_type" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                        <option value="serial" {% if config.mesh.connection_type == 'serial' %}selected{% endif %}>Serial (USB)</option>
+                        <option value="tcp" {% if config.mesh.connection_type == 'tcp' %}selected{% endif %}>TCP (WiFi)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Serial Port</label>
+                    <input type="text" id="mesh_serial_port" value="{{ config.mesh.serial_port or '' }}" 
+                           placeholder="/dev/cu.usbmodem..."
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none font-mono text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Max Message Length</label>
+                    <input type="number" id="mesh_max_length" value="{{ config.mesh.max_message_length }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Chunk Delay (seconds)</label>
+                    <input type="number" id="mesh_chunk_delay" value="{{ config.mesh.chunk_delay_seconds }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+            </div>
+            <div id="mesh-test-result" class="hidden mt-4 p-3 rounded-lg bg-white/5 text-sm"></div>
+        </div>
+        
+        <!-- LLM Section -->
+        <div class="glass rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-white">AI / LLM Settings</h2>
+                <div class="flex gap-2">
+                    <button onclick="testLLM()" class="px-4 py-2 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition">
+                        Test
+                    </button>
+                    <button onclick="saveLLM()" class="px-4 py-2 rounded-lg bg-mesh-500 text-white text-sm font-medium hover:bg-mesh-400 transition">
+                        Save
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Provider</label>
+                    <select id="llm_provider" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                        <option value="lmstudio" {% if config.llm.provider == 'lmstudio' %}selected{% endif %}>LM Studio</option>
+                        <option value="ollama" {% if config.llm.provider == 'ollama' %}selected{% endif %}>Ollama</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">LM Studio URL</label>
+                    <input type="text" id="llm_lmstudio_url" value="{{ config.llm.lmstudio_url }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none font-mono text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">LM Studio Model</label>
+                    <input type="text" id="llm_lmstudio_model" value="{{ config.llm.lmstudio_model }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Ollama URL</label>
+                    <input type="text" id="llm_ollama_url" value="{{ config.llm.ollama_url }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none font-mono text-sm">
+                </div>
+            </div>
+            <div id="llm-test-result" class="hidden mt-4 p-3 rounded-lg bg-white/5 text-sm"></div>
+        </div>
+        
+        <!-- Weather Section -->
+        <div class="glass rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-white">Weather Settings</h2>
+                <button onclick="saveWeather()" class="px-4 py-2 rounded-lg bg-mesh-500 text-white text-sm font-medium hover:bg-mesh-400 transition">
+                    Save
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Enabled</label>
+                    <select id="weather_enabled" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                        <option value="true" {% if config.weather.enabled %}selected{% endif %}>Yes</option>
+                        <option value="false" {% if not config.weather.enabled %}selected{% endif %}>No</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Latitude</label>
+                    <input type="number" step="0.0001" id="weather_lat" value="{{ config.weather.default_lat }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Longitude</label>
+                    <input type="number" step="0.0001" id="weather_lon" value="{{ config.weather.default_lon }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Temperature Unit</label>
+                    <select id="weather_unit" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                        <option value="fahrenheit" {% if config.weather.temperature_unit == 'fahrenheit' %}selected{% endif %}>Fahrenheit</option>
+                        <option value="celsius" {% if config.weather.temperature_unit == 'celsius' %}selected{% endif %}>Celsius</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MQTT Section -->
+        <div class="glass rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-white">Regional MQTT</h2>
+                <button onclick="saveMQTT()" class="px-4 py-2 rounded-lg bg-mesh-500 text-white text-sm font-medium hover:bg-mesh-400 transition">
+                    Save
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Enabled</label>
+                    <select id="mqtt_enabled" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                        <option value="true" {% if config.mqtt.enabled %}selected{% endif %}>Yes</option>
+                        <option value="false" {% if not config.mqtt.enabled %}selected{% endif %}>No</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Broker</label>
+                    <input type="text" id="mqtt_broker" value="{{ config.mqtt.broker }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Port</label>
+                    <input type="number" id="mqtt_port" value="{{ config.mqtt.port }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Username</label>
+                    <input type="text" id="mqtt_username" value="{{ config.mqtt.username }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Password</label>
+                    <input type="password" id="mqtt_password" placeholder="(unchanged)" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Topic</label>
+                    <input type="text" id="mqtt_topic" value="{{ config.mqtt.topic }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none font-mono text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Region Name</label>
+                    <input type="text" id="mqtt_region_name" value="{{ config.mqtt.region_name }}" 
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Kiwix / Wikipedia Section -->
+        <div class="glass rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Offline Wikipedia (Kiwix)</h2>
+                    <p class="text-gray-500 text-xs mt-1">Gives the AI access to Wikipedia knowledge offline</p>
+                </div>
+                <button onclick="saveKiwix()" class="px-4 py-2 rounded-lg bg-mesh-500 text-white text-sm font-medium hover:bg-mesh-400 transition">
+                    Save
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Enabled</label>
+                    <select id="kiwix_enabled" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                        <option value="true" {% if config.kiwix.enabled %}selected{% endif %}>Yes</option>
+                        <option value="false" {% if not config.kiwix.enabled %}selected{% endif %}>No</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Kiwix Server URL</label>
+                    <input type="text" id="kiwix_url" value="{{ config.kiwix.url }}" 
+                           placeholder="http://localhost:8080"
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none font-mono text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Library Name</label>
+                    <input type="text" id="kiwix_library" value="{{ config.kiwix.library }}" 
+                           placeholder="wikipedia_en_simple"
+                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">AI-Enhanced Search</label>
+                    <select id="kiwix_ai_enhanced" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
+                        <option value="true" {% if config.kiwix.ai_enhanced %}selected{% endif %}>Yes (smarter, uses LLM)</option>
+                        <option value="false" {% if not config.kiwix.ai_enhanced %}selected{% endif %}>No (vanilla search)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Kiwix Status & Setup -->
+            <div class="mt-4 p-4 rounded-lg bg-white/5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-sm text-gray-400">Status:</span>
+                        <span id="kiwix-status" class="text-sm ml-2 text-gray-300">Checking...</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="checkKiwix()" class="px-3 py-1.5 rounded bg-white/10 text-white text-sm hover:bg-white/20 transition">
+                            Check Status
+                        </button>
+                        <button onclick="showKiwixSetup()" class="px-3 py-1.5 rounded bg-purple-500/20 text-purple-300 text-sm hover:bg-purple-500/30 transition">
+                            Setup Guide
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Kiwix Setup Guide (hidden by default) -->
+            <div id="kiwix-setup-guide" class="hidden mt-4 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <h3 class="text-white font-medium mb-3">Kiwix Setup Guide</h3>
+                <div class="text-sm text-gray-300 space-y-3">
+                    <div>
+                        <p class="text-purple-300 font-medium">1. Download Kiwix Tools</p>
+                        <code class="block mt-1 p-2 bg-black/30 rounded text-xs">
+# macOS ARM<br>
+curl -L "https://download.kiwix.org/release/kiwix-tools/kiwix-tools_macos-arm64-3.8.1.tar.gz" -o kiwix-tools.tar.gz<br>
+tar -xzf kiwix-tools.tar.gz
+                        </code>
+                    </div>
+                    <div>
+                        <p class="text-purple-300 font-medium">2. Download Wikipedia (Simple English, ~900MB)</p>
+                        <code class="block mt-1 p-2 bg-black/30 rounded text-xs">
+curl -L "https://download.kiwix.org/zim/wikipedia/wikipedia_en_simple_all_nopic_2025-01.zim" -o wikipedia.zim
+                        </code>
+                    </div>
+                    <div>
+                        <p class="text-purple-300 font-medium">3. Start Kiwix Server</p>
+                        <code class="block mt-1 p-2 bg-black/30 rounded text-xs">
+./kiwix-serve --port 8080 wikipedia.zim
+                        </code>
+                    </div>
+                    <div>
+                        <p class="text-purple-300 font-medium">4. Configure above</p>
+                        <p class="text-gray-400">Set URL to <code class="text-mesh-400">http://localhost:8080</code> and enable Kiwix</p>
+                    </div>
+                </div>
+                <p class="text-gray-500 text-xs mt-3">
+                    Or run: <code class="text-mesh-400">python scripts/setup_kiwix.py</code> to automate this
+                </p>
+            </div>
+        </div>
+        
+        <!-- System Prompt Section -->
+        <div class="glass rounded-xl p-6">
+            <h2 class="text-lg font-bold text-white mb-4">System Prompt</h2>
+            <div class="bg-black/30 rounded-xl p-4 max-h-64 overflow-y-auto">
+                <pre class="text-sm text-gray-300 whitespace-pre-wrap">{{ config.llm.system_prompt }}</pre>
+            </div>
+            <p class="text-gray-500 text-sm mt-3">
+                Edit <code class="text-mesh-400">config.yaml</code> directly to change the system prompt.
+            </p>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="glass rounded-xl p-6">
+            <h2 class="text-lg font-bold text-white mb-4">Quick Actions</h2>
+            <div class="flex flex-wrap gap-3">
+                <a href="/api/messages?limit=1000" target="_blank" class="px-4 py-2 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition">
+                    Export Messages (JSON)
+                </a>
+                <a href="/api/nodes" target="_blank" class="px-4 py-2 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition">
+                    Export Nodes (JSON)
+                </a>
+                <button onclick="clearMessages()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 text-sm hover:bg-red-500/30 transition">
+                    Clear Message Log
+                </button>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showAlert(message, isError = false) {
+        const alert = document.getElementById('unsaved-alert');
+        alert.querySelector('span').textContent = message;
+        alert.classList.remove('hidden');
+        if (isError) {
+            alert.classList.remove('bg-amber-500/20', 'border-amber-500/30');
+            alert.classList.add('bg-red-500/20', 'border-red-500/30');
+            alert.querySelector('span').classList.add('text-red-400');
+        }
+    }
+    
+    async function apiCall(endpoint, data) {
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (e) {
+            return { status: 'error', message: e.message };
+        }
+    }
+    
+    async function saveBranding() {
+        const result = await apiCall('/api/admin/config/branding', {
+            community_name: document.getElementById('community_name').value,
+            community_description: document.getElementById('community_description').value,
+            location_name: document.getElementById('location_name').value,
+            bot_short_name: document.getElementById('bot_short_name').value,
+            bot_long_name: document.getElementById('bot_long_name').value
+        });
+        showAlert(result.message);
+    }
+    
+    async function saveMesh() {
+        const result = await apiCall('/api/admin/config/mesh', {
+            protocol: document.getElementById('mesh_protocol').value,
+            connection_type: document.getElementById('mesh_connection_type').value,
+            serial_port: document.getElementById('mesh_serial_port').value || null,
+            max_message_length: parseInt(document.getElementById('mesh_max_length').value),
+            chunk_delay_seconds: parseInt(document.getElementById('mesh_chunk_delay').value)
+        });
+        showAlert(result.message);
+    }
+    
+    async function saveLLM() {
+        const result = await apiCall('/api/admin/config/llm', {
+            provider: document.getElementById('llm_provider').value,
+            lmstudio_url: document.getElementById('llm_lmstudio_url').value,
+            lmstudio_model: document.getElementById('llm_lmstudio_model').value,
+            ollama_url: document.getElementById('llm_ollama_url').value
+        });
+        showAlert(result.message);
+    }
+    
+    async function saveWeather() {
+        const result = await apiCall('/api/admin/config/weather', {
+            enabled: document.getElementById('weather_enabled').value === 'true',
+            default_lat: parseFloat(document.getElementById('weather_lat').value),
+            default_lon: parseFloat(document.getElementById('weather_lon').value),
+            temperature_unit: document.getElementById('weather_unit').value
+        });
+        showAlert(result.message);
+    }
+    
+    async function saveMQTT() {
+        const data = {
+            enabled: document.getElementById('mqtt_enabled').value === 'true',
+            broker: document.getElementById('mqtt_broker').value,
+            port: parseInt(document.getElementById('mqtt_port').value),
+            username: document.getElementById('mqtt_username').value,
+            topic: document.getElementById('mqtt_topic').value,
+            region_name: document.getElementById('mqtt_region_name').value
+        };
+        const password = document.getElementById('mqtt_password').value;
+        if (password) data.password = password;
+        
+        const result = await apiCall('/api/admin/config/mqtt', data);
+        showAlert(result.message);
+    }
+    
+    async function saveKiwix() {
+        const result = await apiCall('/api/admin/config/kiwix', {
+            enabled: document.getElementById('kiwix_enabled').value === 'true',
+            url: document.getElementById('kiwix_url').value,
+            library: document.getElementById('kiwix_library').value,
+            ai_enhanced: document.getElementById('kiwix_ai_enhanced').value === 'true'
+        });
+        showAlert(result.message);
+    }
+    
+    async function checkKiwix() {
+        const statusEl = document.getElementById('kiwix-status');
+        statusEl.textContent = 'Checking...';
+        statusEl.className = 'text-sm ml-2 text-gray-300';
+        
+        try {
+            const response = await fetch('/api/admin/test/kiwix', { method: 'POST' });
+            const result = await response.json();
+            if (result.status === 'ok') {
+                statusEl.textContent = 'Connected - ' + result.message;
+                statusEl.className = 'text-sm ml-2 text-green-400';
+            } else {
+                statusEl.textContent = 'Not available - ' + result.message;
+                statusEl.className = 'text-sm ml-2 text-amber-400';
+            }
+        } catch (e) {
+            statusEl.textContent = 'Error checking status';
+            statusEl.className = 'text-sm ml-2 text-red-400';
+        }
+    }
+    
+    function showKiwixSetup() {
+        const guide = document.getElementById('kiwix-setup-guide');
+        guide.classList.toggle('hidden');
+    }
+    
+    // Check Kiwix status on page load
+    checkKiwix();
+    
+    async function testMesh() {
+        const resultEl = document.getElementById('mesh-test-result');
+        resultEl.classList.remove('hidden');
+        resultEl.innerHTML = '<span class="text-gray-400">Testing...</span>';
+        
+        const result = await apiCall('/api/admin/test/mesh', {});
+        if (result.status === 'ok') {
+            resultEl.innerHTML = `<span class="text-green-400">Connected!</span> Node ID: ${result.node_id || 'unknown'}`;
+        } else {
+            resultEl.innerHTML = `<span class="text-red-400">Error:</span> ${result.message || result.state}`;
+        }
+    }
+    
+    async function testLLM() {
+        const resultEl = document.getElementById('llm-test-result');
+        resultEl.classList.remove('hidden');
+        resultEl.innerHTML = '<span class="text-gray-400">Testing...</span>';
+        
+        const result = await apiCall('/api/admin/test/llm', {});
+        if (result.status === 'ok') {
+            resultEl.innerHTML = `<span class="text-green-400">LLM OK!</span> Response: "${result.response}"`;
+        } else {
+            resultEl.innerHTML = `<span class="text-red-400">Error:</span> ${result.message}`;
+        }
+    }
+    
+    function clearMessages() {
+        if (confirm('Are you sure you want to clear all messages? This cannot be undone.')) {
+            alert('Message clearing requires direct database access. Use: sqlite3 data/meshbot.db "DELETE FROM messages;"');
+        }
+    }
+</script>
+{% endblock %}

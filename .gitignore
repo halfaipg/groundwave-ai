@@ -1,0 +1,101 @@
+# groundwave-ai .gitignore
+# ═══════════════════════════════════════════════════════════
+
+# ─────────────────────────────────────────────────────────────
+# SECRETS & LOCAL CONFIG (NEVER COMMIT)
+# ─────────────────────────────────────────────────────────────
+.env
+config.yaml
+*.local.yaml
+
+# ─────────────────────────────────────────────────────────────
+# PYTHON
+# ─────────────────────────────────────────────────────────────
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ─────────────────────────────────────────────────────────────
+# DATA & DATABASES
+# ─────────────────────────────────────────────────────────────
+data/*.db
+data/wikipedia/
+*.sqlite
+*.sqlite3
+
+# ─────────────────────────────────────────────────────────────
+# KIWIX / WIKIPEDIA
+# ─────────────────────────────────────────────────────────────
+data/kiwix/*.zim
+data/kiwix/kiwix-tools*/
+
+# ─────────────────────────────────────────────────────────────
+# LOGS & TEMP FILES
+# ─────────────────────────────────────────────────────────────
+*.log
+/tmp/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ─────────────────────────────────────────────────────────────
+# IDE & EDITOR
+# ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ─────────────────────────────────────────────────────────────
+# RESEARCH / CLONED REPOS (for development only)
+# ─────────────────────────────────────────────────────────────
+research/
+
+# ─────────────────────────────────────────────────────────────
+# TEST FILES
+# ─────────────────────────────────────────────────────────────
+test_*.py
+*_test.py
+
+# ─────────────────────────────────────────────────────────────
+# BRANDING (users add their own)
+# ─────────────────────────────────────────────────────────────
+# Generic groundwave-* branding ships with repo
+# Users put custom branding in app/static/ and set paths in .env
+
+# Ignore custom logos in app/static/
+app/static/logo*.png
+app/static/favicon.png
+
+# Ignore loose branding files in project root
+signal_west*.png
+signalwest*.png
+*logo*.png
+
+# ─────────────────────────────────────────────────────────────
+# BACKUPS
+# ─────────────────────────────────────────────────────────────
+*.bak
+*.backup
+backups/
+*.tar.gz

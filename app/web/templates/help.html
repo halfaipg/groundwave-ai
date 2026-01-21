@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
+    
+    <!-- Two Column Layout: Commands + Quick Start (50/50 split) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 sm:mb-8">
+        <!-- Commands Reference (Left) -->
+        <div class="glass rounded-xl sm:rounded-2xl overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 border-b border-white/10">
+                <h2 class="text-lg sm:text-xl font-bold text-white">All Commands</h2>
+                <p class="text-sm text-gray-400 mt-1">Prefix with <code class="text-mesh-400">{{ command_prefix }}</code></p>
+            </div>
+            
+            <div class="divide-y divide-white/5">
+                {% for cmd in commands %}
+                <div class="px-4 sm:px-6 py-2.5 flex items-start space-x-3 hover:bg-white/5 transition">
+                    <code class="text-mesh-400 font-mono text-sm w-24 flex-shrink-0">{{ command_prefix }}{{ cmd.name }}</code>
+                    <span class="text-gray-400 text-sm">{{ cmd.desc }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Right Column: Quick Start + BBS Guide -->
+        <div class="space-y-6">
+            <!-- Quick Start (same format as Commands) -->
+            <div class="glass rounded-xl sm:rounded-2xl overflow-hidden">
+                <div class="px-4 sm:px-6 py-4 border-b border-white/10">
+                    <h2 class="text-lg sm:text-xl font-bold text-white">Quick Start</h2>
+                    <p class="text-sm text-gray-400 mt-1">Common tasks to get started</p>
+                </div>
+                
+                <div class="divide-y divide-white/5">
+                    <div class="px-4 sm:px-6 py-2.5 flex items-start space-x-3 hover:bg-white/5 transition">
+                        <code class="text-mesh-400 font-mono text-sm w-24 flex-shrink-0">Chat with AI</code>
+                        <span class="text-gray-400 text-sm">DM the bot or use {{ command_prefix }}ai</span>
+                    </div>
+                    <div class="px-4 sm:px-6 py-2.5 flex items-start space-x-3 hover:bg-white/5 transition">
+                        <code class="text-mesh-400 font-mono text-sm w-24 flex-shrink-0">Weather</code>
+                        <span class="text-gray-400 text-sm">Send {{ command_prefix }}wx</span>
+                    </div>
+                    <div class="px-4 sm:px-6 py-2.5 flex items-start space-x-3 hover:bg-white/5 transition">
+                        <code class="text-mesh-400 font-mono text-sm w-24 flex-shrink-0">Post to BBS</code>
+                        <span class="text-gray-400 text-sm">Use {{ command_prefix }}post message</span>
+                    </div>
+                    <div class="px-4 sm:px-6 py-2.5 flex items-start space-x-3 hover:bg-white/5 transition">
+                        <code class="text-mesh-400 font-mono text-sm w-24 flex-shrink-0">Check Mail</code>
+                        <span class="text-gray-400 text-sm">Send {{ command_prefix }}mail</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- BBS Guide -->
+            <div class="glass rounded-xl sm:rounded-2xl overflow-hidden">
+                <div class="px-4 sm:px-6 py-4 border-b border-white/10">
+                    <h2 class="text-lg sm:text-xl font-bold text-white">Bulletin Board</h2>
+                    <p class="text-sm text-gray-400 mt-1">Public posts and private mail</p>
+                </div>
+                
+                <div class="divide-y divide-white/5">
+                    <div class="px-4 sm:px-6 py-2.5 flex items-start space-x-3 hover:bg-white/5 transition">
+                        <code class="text-mesh-400 font-mono text-sm w-24 flex-shrink-0">Public</code>
+                        <span class="text-gray-400 text-sm">{{ command_prefix }}post Hello neighbors!</span>
+                    </div>
+                    <div class="px-4 sm:px-6 py-2.5 flex items-start space-x-3 hover:bg-white/5 transition">
+                        <code class="text-mesh-400 font-mono text-sm w-24 flex-shrink-0">View Posts</code>
+                        <span class="text-gray-400 text-sm">{{ command_prefix }}bbs</span>
+                    </div>
+                    <div class="px-4 sm:px-6 py-2.5 flex items-start space-x-3 hover:bg-white/5 transition">
+                        <code class="text-mesh-400 font-mono text-sm w-24 flex-shrink-0">Private</code>
+                        <span class="text-gray-400 text-sm">{{ command_prefix }}post @!node Hi there!</span>
+                    </div>
+                    <div class="px-4 sm:px-6 py-2.5 flex items-start space-x-3 hover:bg-white/5 transition">
+                        <code class="text-mesh-400 font-mono text-sm w-24 flex-shrink-0">Check Mail</code>
+                        <span class="text-gray-400 text-sm">{{ command_prefix }}mail</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Chat Tips -->
+    <div class="glass rounded-xl sm:rounded-2xl p-5 sm:p-8 mb-6 sm:mb-8">
+        <h2 class="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">AI Chat Tips</h2>
+        <div class="space-y-4 text-gray-400">
+            <p>
+                <span class="text-mesh-400 font-semibold">Keep it short:</span> 
+                Due to LoRa bandwidth limits, shorter questions get better responses. The AI is trained to be concise.
+            </p>
+            <p>
+                <span class="text-mesh-400 font-semibold">Direct messages work best:</span> 
+                Send a DM to the bot node for the best AI experience. Channel messages may have limited responses.
+            </p>
+            <p>
+                <span class="text-mesh-400 font-semibold">Clear history:</span> 
+                Use <code class="text-mesh-400 bg-mesh-500/20 px-2 py-0.5 rounded">{{ command_prefix }}clear</code> to start a fresh conversation.
+            </p>
+        </div>
+    </div>
+    
+    <!-- FAQ -->
+    <div class="glass rounded-xl sm:rounded-2xl p-5 sm:p-8">
+        <h2 class="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">FAQ</h2>
+        
+        <div class="space-y-6">
+            <div>
+                <h3 class="text-mesh-400 font-semibold mb-2">How do I join the mesh network?</h3>
+                <p class="text-gray-400">Get a Meshtastic-compatible device (T-Deck, T-Beam, Heltec, etc.), flash Meshtastic firmware, and your device will automatically discover nearby nodes.</p>
+            </div>
+            
+            <div>
+                <h3 class="text-mesh-400 font-semibold mb-2">What's the range of the mesh?</h3>
+                <p class="text-gray-400">Individual LoRa links can reach several kilometers line-of-sight. Through mesh hopping, the network can extend much further as nodes relay messages.</p>
+            </div>
+            
+            <div>
+                <h3 class="text-mesh-400 font-semibold mb-2">Do I need internet to use this?</h3>
+                <p class="text-gray-400">No! The mesh network operates independently. Your device communicates directly with other nodes via radio. The bot node has internet for AI and weather, but you don't need it.</p>
+            </div>
+            
+            <div>
+                <h3 class="text-mesh-400 font-semibold mb-2">Why are responses sometimes slow?</h3>
+                <p class="text-gray-400">LoRa is designed for long range, not speed. Messages are sent at low data rates to maximize reliability. The AI also takes a moment to generate responses.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

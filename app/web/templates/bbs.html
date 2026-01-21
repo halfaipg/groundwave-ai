@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
+    
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+        <!-- Sidebar - Boards -->
+        <div class="space-y-3 sm:space-y-4">
+            <div class="glass rounded-xl sm:rounded-2xl p-3 sm:p-4">
+                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Boards</h3>
+                <nav class="space-y-1">
+                    <a href="/bbs" class="flex items-center justify-between px-4 py-2.5 rounded-xl {% if not current_board or current_board == 'General' %}bg-mesh-500/20 text-mesh-400{% else %}text-gray-300 hover:bg-white/5{% endif %} transition">
+                        <span>📋 All Posts</span>
+                        <span class="text-xs bg-white/10 px-2 py-0.5 rounded-full">{{ posts|length }}</span>
+                    </a>
+                    {% for board in boards %}
+                    <a href="/bbs?board={{ board.name }}" class="flex items-center justify-between px-4 py-2.5 rounded-xl {% if current_board == board.name %}bg-mesh-500/20 text-mesh-400{% else %}text-gray-300 hover:bg-white/5{% endif %} transition">
+                        <span>{{ board.name }}</span>
+                    </a>
+                    {% endfor %}
+                </nav>
+            </div>
+            
+            <!-- Post Form -->
+            <div class="glass rounded-xl sm:rounded-2xl p-3 sm:p-4">
+                <h3 class="text-xs sm:text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 sm:mb-4">New Post</h3>
+                <form id="post-form" class="space-y-3">
+                    <select id="post-board" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 text-sm">
+                        {% for board in boards %}
+                        <option value="{{ board.name }}" {% if current_board == board.name %}selected{% endif %}>
+                            {{ board.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <textarea id="post-content" 
+                              class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm resize-none"
+                              rows="3"
+                              placeholder="Write your message..."></textarea>
+                    <button type="submit" class="w-full px-4 py-2 rounded-lg bg-mesh-500 text-white text-sm font-medium hover:bg-mesh-400 transition">
+                        Post Message
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Help -->
+            <div class="glass rounded-xl sm:rounded-2xl p-3 sm:p-4">
+                <h3 class="text-xs sm:text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Via Mesh</h3>
+                <div class="space-y-2 text-sm text-gray-400">
+                    <p><code class="text-mesh-400">!bbs</code> - List posts</p>
+                    <p><code class="text-mesh-400">!post &lt;msg&gt;</code> - Post</p>
+                    <p><code class="text-mesh-400">!mail</code> - Check mail</p>
+                    <p><code class="text-mesh-400">!post @node msg</code> - Send mail</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content - Posts -->
+        <div class="lg:col-span-3">
+            <div class="glass rounded-xl sm:rounded-2xl overflow-hidden">
+                <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/10">
+                    <h2 class="text-base sm:text-lg font-semibold text-white">
+                        {% if current_board %}{{ current_board }}{% else %}All Posts{% endif %}
+                    </h2>
+                </div>
+                
+                <div class="divide-y divide-white/5">
+                    {% for post in posts %}
+                    <div class="px-4 sm:px-6 py-4 sm:py-5 hover:bg-white/5 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2 sm:space-x-3">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-mesh-500 to-mesh-700 flex items-center justify-center text-white text-sm sm:text-base font-bold">
+                                    {{ (post.from_name or post.from_id)[0].upper() }}
+                                </div>
+                                <div>
+                                    <div class="text-sm sm:text-base font-medium text-white">{{ post.from_name or post.from_id[:12] }}</div>
+                                    <div class="flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
+                                        <span class="px-1.5 sm:px-2 py-0.5 rounded-full bg-mesh-500/20 text-mesh-400 text-xs">{{ post.board }}</span>
+                                        <span class="hidden sm:inline">{{ post.created_at.strftime('%b %d, %H:%M') if post.created_at else '' }}</span>
+                                        <span class="sm:hidden">{{ post.created_at.strftime('%m/%d') if post.created_at else '' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if post.to_id %}
+                            <span class="px-2 py-1 rounded-lg bg-blue-500/20 text-blue-400 text-xs flex-shrink-0">
+                                📧 <span class="hidden sm:inline">Private</span>
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if post.subject %}
+                        <h4 class="text-sm sm:text-base font-medium text-white mt-2 sm:mt-3">{{ post.subject }}</h4>
+                        {% endif %}
+                        
+                        <p class="text-sm sm:text-base text-gray-300 mt-2 sm:mt-3 whitespace-pre-wrap">{{ post.content }}</p>
+                    </div>
+                    {% else %}
+                    <div class="px-4 sm:px-6 py-12 sm:py-16 text-center">
+                        <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                            <span class="text-2xl sm:text-3xl">📋</span>
+                        </div>
+                        <h3 class="text-base sm:text-lg font-medium text-white mb-2">No Posts Yet</h3>
+                        <p class="text-sm sm:text-base text-gray-500">Be the first to post on this board!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('post-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const board = document.getElementById('post-board').value;
+        const content = document.getElementById('post-content').value.trim();
+        
+        if (!content) return;
+        
+        try {
+            const response = await fetch('/api/bbs/post', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ board, content })
+            });
+            
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Failed to post message');
+            }
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    });
+</script>
+{% endblock %}

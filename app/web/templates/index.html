@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-12 lg:py-16">
+    <!-- Hero Section -->
+    <div class="text-center">
+        <img src="{{ logo_large }}" alt="{{ community_name }}" class="w-28 h-28 sm:w-40 sm:h-40 rounded-full mb-4 sm:mb-6 glow mx-auto">
+        
+        <p class="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-3 sm:mb-4 px-2">
+            {{ community_description }}
+        </p>
+        
+        <p class="text-sm text-gray-500 mb-6 sm:mb-8">
+            Message <span class="text-mesh-400 font-mono">{{ bot_short_name }}</span> on the mesh to get started
+        </p>
+        
+        <div class="flex flex-wrap justify-center gap-3 sm:gap-4 px-4 mb-2">
+            <a href="/status" class="px-6 sm:px-8 py-3 rounded-xl glass text-white font-semibold hover:bg-white/10 transition text-sm sm:text-base">
+                View Status
+            </a>
+            <a href="/help" class="px-6 sm:px-8 py-3 rounded-xl glass text-white font-semibold hover:bg-white/10 transition text-sm sm:text-base">
+                View Commands
+            </a>
+        </div>
+    </div>
+    
+    <!-- Features Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mt-10 sm:mt-16 lg:mt-20">
+        <!-- AI Assistant -->
+        <div class="glass rounded-xl sm:rounded-2xl p-6 sm:p-8 hover:border-mesh-500/50 transition text-center">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-mesh-500/10 flex items-center justify-center mb-4 sm:mb-6 mx-auto">
+                <svg class="w-6 h-6 sm:w-7 sm:h-7 text-mesh-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">AI Assistant</h3>
+            <p class="text-sm sm:text-base text-gray-400">
+                Chat with our local, private LLM over the mesh. No internet required, no data leaves the network. 
+                Ask questions, get weather info, look up resources, or just have a conversation.
+            </p>
+        </div>
+        
+        <!-- Bulletin Board -->
+        <div class="glass rounded-xl sm:rounded-2xl p-6 sm:p-8 hover:border-mesh-500/50 transition text-center">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-mesh-500/10 flex items-center justify-center mb-4 sm:mb-6 mx-auto">
+                <svg class="w-6 h-6 sm:w-7 sm:h-7 text-mesh-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 12H7c-.55 0-1-.45-1-1s.45-1 1-1h10c.55 0 1 .45 1 1s-.45 1-1 1zm0-3H7c-.55 0-1-.45-1-1s.45-1 1-1h10c.55 0 1 .45 1 1s-.45 1-1 1zm0-3H7c-.55 0-1-.45-1-1s.45-1 1-1h10c.55 0 1 .45 1 1s-.45 1-1 1z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">Bulletin Board</h3>
+            <p class="text-sm sm:text-base text-gray-400">
+                Community message board accessible over the mesh. Post public announcements, send private mail, 
+                and stay connected with your neighbors without relying on traditional internet.
+            </p>
+        </div>
+        
+        <!-- Weather -->
+        <div class="glass rounded-xl sm:rounded-2xl p-6 sm:p-8 hover:border-mesh-500/50 transition text-center">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-mesh-500/10 flex items-center justify-center mb-4 sm:mb-6 mx-auto">
+                <svg class="w-6 h-6 sm:w-7 sm:h-7 text-mesh-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg sm:text-xl font-semibold text-white mb-2 sm:mb-3">Weather</h3>
+            <p class="text-sm sm:text-base text-gray-400">
+                Current conditions and multi-day forecasts for {{ location_name }}. 
+                Access weather info through the mesh without needing your own internet connection.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Offline First -->
+    <div class="mt-10 sm:mt-16 glass rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center">
+        <h2 class="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">Built for Reliability</h2>
+        <p class="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto px-2">
+            We're building a platform with useful services that work without terrestrial internet. 
+            Local AI, satellite and local weather data, and Starlink connectivity for more reliable 
+            access to clearweb services. No cloud dependencies, no data harvesting.
+        </p>
+        <p class="text-xs text-gray-500 mt-4">
+            AI powered by <a href="https://platform.openai.com/docs/models/gpt-oss-120b" target="_blank" class="text-mesh-400 hover:text-mesh-300">GPT-OSS-120B</a>
+        </p>
+    </div>
+    
+    <!-- Resources -->
+    <div class="mt-6 sm:mt-10 glass rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center">
+        <h2 class="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">New to Meshtastic?</h2>
+        <p class="text-sm sm:text-base text-gray-400 mb-4 sm:mb-6">Check out these resources to get started</p>
+        <div class="flex flex-wrap justify-center gap-3 sm:gap-4">
+            <a href="https://meshtastic.org/docs/getting-started" 
+               target="_blank"
+               class="px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl glass text-white text-sm sm:text-base font-semibold hover:bg-white/10 transition">
+                Meshtastic Docs
+            </a>
+            <a href="https://github.com/meshtastic" 
+               target="_blank"
+               class="px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl glass text-white text-sm sm:text-base font-semibold hover:bg-white/10 transition">
+                Meshtastic GitHub
+            </a>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

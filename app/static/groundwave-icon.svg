@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="#0f172a"/>
+  
+  <!-- Wave -->
+  <path d="M 8 32 Q 20 18, 32 32 T 56 32" 
+        fill="none" 
+        stroke="url(#wg)" 
+        stroke-width="5" 
+        stroke-linecap="round"/>
+  
+  <!-- Node dot -->
+  <circle cx="32" cy="32" r="4" fill="#60a5fa"/>
+</svg>

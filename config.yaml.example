@@ -1,0 +1,156 @@
+# groundwave-ai Configuration
+# ═══════════════════════════════════════════════════════════
+# Copy this file to config.yaml and customize for your deployment
+# Secrets and deployment-specific settings go in .env file
+# ═══════════════════════════════════════════════════════════
+
+# ─────────────────────────────────────────────────────────────
+# MESH INTERFACE
+# ─────────────────────────────────────────────────────────────
+mesh:
+  # Protocol: "meshtastic" or "meshcore"
+  # MeshCore is recommended for new deployments
+  # Meshtastic is supported for legacy/transition
+  protocol: meshtastic
+  
+  # Connection settings loaded from .env:
+  # - MESH_CONNECTION_TYPE, MESH_SERIAL_PORT, MESH_TCP_HOST, MESH_TCP_PORT
+  
+  # Message chunking settings (for protocols with size limits)
+  max_message_length: 175  # Max bytes per chunk (175 recommended for reliability)
+  chunk_delay_seconds: 15  # Delay between chunks (LoRa needs time to transmit)
+
+# ─────────────────────────────────────────────────────────────
+# AI / LLM SETTINGS  
+# ─────────────────────────────────────────────────────────────
+llm:
+  # Provider and URLs loaded from .env:
+  # - LLM_PROVIDER, LMSTUDIO_URL, LMSTUDIO_MODEL, OLLAMA_URL, OLLAMA_MODEL
+  
+  # System prompt - customize your AI's personality and knowledge
+  # Use {community_name} to insert your community name
+  system_prompt: |
+    You are a helpful AI assistant on a community mesh network called {community_name}.
+    You are a fully offline LLM running locally - you don't require internet to function.
+    This makes you valuable during emergencies, outages, or off-grid situations.
+    
+    You communicate via LoRa radio mesh, so keep responses concise (under 500 characters when possible).
+    Use plain text only - no markdown, no bold, no code blocks, no bullet points with dashes.
+    
+    Be friendly and helpful to your neighbors. If you don't know something, say so honestly.
+    Do not make up information, addresses, phone numbers, or business names.
+    
+    Available commands users can send (prefix with !):
+    !help - Show available commands
+    !ping - Test connectivity
+    !wx or !weather - Current weather conditions
+    !forecast - Multi-day weather forecast
+    !nodes - List active mesh nodes
+    !ai or !ask [question] - Ask you a question directly
+    !bbs - View bulletin board posts
+    !post [message] - Post to bulletin board
+    !mail - Check private mail
+    !clear - Clear conversation history
+    
+    If users ask how to use the bot or what you can do, tell them about these commands.
+  
+  # Local area info - add your community's local knowledge here
+  local_knowledge: |
+    Add local information here that your AI should know about:
+    - Local landmarks, businesses, meeting spots
+    - Emergency resources, shelters, hospitals
+    - Community events or regular gatherings
+    - Geographic features (rivers, hills, neighborhoods)
+    
+    Example:
+    "Main Street has several restaurants and the community center.
+    The fire station is on Oak Ave. Lake Park is popular for gatherings."
+
+# ─────────────────────────────────────────────────────────────
+# WEB PORTAL
+# ─────────────────────────────────────────────────────────────
+web:
+  # Host and port loaded from .env: WEB_HOST, WEB_PORT
+  # Admin settings loaded from .env: ADMIN_ENABLED, ADMIN_PASSWORD
+  
+  # Branding assets (place your files in app/static/)
+  # favicon: /static/favicon.png
+  # logo_large: /static/logo-large.png
+  # logo_small: /static/logo-small.png
+  
+  # Page titles and descriptions
+  meta:
+    title: "{community_name} - Mesh Network"
+    description: "Community mesh network portal"
+
+# ─────────────────────────────────────────────────────────────
+# BULLETIN BOARD SYSTEM
+# ─────────────────────────────────────────────────────────────
+bbs:
+  enabled: true
+  max_messages_per_user: 50
+  message_expiry_days: 30
+  
+  # Customize your bulletin board categories
+  boards:
+    - name: General
+      description: General community discussion
+    - name: Urgent
+      description: Time-sensitive messages and alerts
+    - name: Info
+      description: Community information and announcements
+    - name: Trade
+      description: Items for sale, trade, or wanted
+
+# ─────────────────────────────────────────────────────────────
+# WEATHER (Open-Meteo API - free, no key required)
+# ─────────────────────────────────────────────────────────────
+weather:
+  # Enable/disable and default location loaded from .env:
+  # - WEATHER_ENABLED, WEATHER_DEFAULT_LAT, WEATHER_DEFAULT_LON
+  
+  # Cache settings
+  cache_minutes: 15
+  
+  # Units
+  temperature_unit: fahrenheit  # fahrenheit or celsius
+  wind_speed_unit: mph          # mph, kmh, ms, kn
+
+# ─────────────────────────────────────────────────────────────
+# REGIONAL MQTT (Optional)
+# ─────────────────────────────────────────────────────────────
+mqtt:
+  # Connection settings loaded from .env:
+  # - MQTT_ENABLED, MQTT_BROKER, MQTT_PORT, MQTT_USERNAME, MQTT_PASSWORD, MQTT_TOPIC
+  
+  # What to collect from regional MQTT
+  collect_nodes: true       # Discover nodes from regional network
+  collect_messages: false   # Store messages (consider privacy)
+  collect_telemetry: true   # Collect signal/battery data
+  
+  # Display settings  
+  show_on_status_page: true
+  separate_section: true    # Keep regional data visually separate
+
+# ─────────────────────────────────────────────────────────────
+# KIWIX / OFFLINE WIKIPEDIA (Optional)
+# ─────────────────────────────────────────────────────────────
+kiwix:
+  # Connection settings loaded from .env:
+  # - KIWIX_ENABLED, KIWIX_URL, KIWIX_LIBRARY, KIWIX_AI_ENHANCED
+  
+  # Fallback to Wikipedia API if Kiwix unavailable (requires internet)
+  wikipedia_fallback: false
+
+# ─────────────────────────────────────────────────────────────
+# SAFETY FEATURES
+# ─────────────────────────────────────────────────────────────
+safety:
+  # Prevent bot loops (bots responding to each other)
+  ignore_own_messages: true
+  
+  # Rate limiting
+  rate_limit_per_minute: 10
+  
+  # Command prefix (users type !help, !weather, etc.)
+  command_prefix: "!"
