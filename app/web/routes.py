@@ -198,12 +198,9 @@ async def help_page(request: Request):
 @router.get("/admin/login", response_class=HTMLResponse)
 async def admin_login_page(request: Request):
     """Admin login page."""
-    # Check IP-based access control first
+    # Check IP-based access control first - return 404 to hide admin exists
     if not is_admin_allowed(request):
-        context = get_common_context(request)
-        context["page_title"] = "Access Denied"
-        context["error_message"] = f"Admin access is restricted. Your IP: {get_client_ip(request)}"
-        return templates.TemplateResponse("admin_denied.html", context)
+        raise HTTPException(status_code=404, detail="Not Found")
     
     if is_authenticated(request):
         return RedirectResponse(url="/admin", status_code=302)
@@ -217,9 +214,9 @@ async def admin_login_page(request: Request):
 @router.post("/admin/login")
 async def admin_login(request: Request, password: str = Form(...)):
     """Handle admin login."""
-    # Check IP-based access control
+    # Check IP-based access control - return 404 to hide admin exists
     if not is_admin_allowed(request):
-        return RedirectResponse(url="/admin/login", status_code=302)
+        raise HTTPException(status_code=404, detail="Not Found")
     
     if password == config.web.admin_password:
         session_id = secrets.token_urlsafe(32)
@@ -253,12 +250,9 @@ async def admin_logout(request: Request):
 @router.get("/admin", response_class=HTMLResponse)
 async def admin_page(request: Request):
     """Admin panel - requires authentication."""
-    # Check IP-based access control first
+    # Check IP-based access control first - return 404 to hide admin exists
     if not is_admin_allowed(request):
-        context = get_common_context(request)
-        context["page_title"] = "Access Denied"
-        context["error_message"] = f"Admin access is restricted. Your IP: {get_client_ip(request)}"
-        return templates.TemplateResponse("admin_denied.html", context)
+        raise HTTPException(status_code=404, detail="Not Found")
     
     if not is_authenticated(request):
         return RedirectResponse(url="/admin/login", status_code=302)
