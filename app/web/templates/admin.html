@@ -116,9 +116,18 @@
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Serial Port</label>
-                    <input type="text" id="mesh_serial_port" value="{{ config.mesh.serial_port or '' }}" 
-                           placeholder="/dev/cu.usbmodem..."
-                           class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none font-mono text-sm">
+                    <div class="flex gap-2">
+                        <input type="text" id="mesh_serial_port" value="{{ config.mesh.serial_port or '' }}" 
+                               placeholder="/dev/cu.usbmodem..."
+                               class="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none font-mono text-sm">
+                        <button onclick="detectSerialPorts()" class="px-3 py-2 rounded-lg bg-blue-500/20 text-blue-400 text-sm font-medium hover:bg-blue-500/30 transition whitespace-nowrap">
+                            Detect
+                        </button>
+                    </div>
+                    <div id="serial-ports-list" class="hidden mt-2 p-2 rounded-lg bg-white/5 border border-white/10">
+                        <div class="text-xs text-gray-400 mb-2">Detected devices:</div>
+                        <div id="serial-ports-items" class="space-y-1"></div>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Max Message Length</label>
@@ -564,6 +573,41 @@ curl -L "https://download.kiwix.org/zim/wikipedia/wikipedia_en_simple_all_nopic_
     document.getElementById('location_search')?.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') searchLocation();
     });
+    
+    async function detectSerialPorts() {
+        const listEl = document.getElementById('serial-ports-list');
+        const itemsEl = document.getElementById('serial-ports-items');
+        listEl.classList.remove('hidden');
+        itemsEl.innerHTML = '<div class="text-gray-400 text-sm">Scanning...</div>';
+        
+        try {
+            const response = await fetch('/api/admin/detect/serial');
+            const result = await response.json();
+            
+            if (result.status === 'ok' && result.ports.length > 0) {
+                itemsEl.innerHTML = result.ports.map(p => `
+                    <button onclick="selectSerialPort('${p.path}')" 
+                            class="w-full text-left px-3 py-2 rounded bg-white/5 hover:bg-mesh-500/20 text-sm transition ${p.path === result.current ? 'border border-mesh-500' : ''}">
+                        <span class="font-mono text-mesh-400">${p.path}</span>
+                        ${p.description ? `<span class="text-gray-400 ml-2">${p.description}</span>` : ''}
+                        ${p.path === result.current ? '<span class="text-green-400 ml-2">(current)</span>' : ''}
+                    </button>
+                `).join('');
+            } else if (result.ports.length === 0) {
+                itemsEl.innerHTML = '<div class="text-amber-400 text-sm">No USB devices found. Make sure your modem is plugged in.</div>';
+            } else {
+                itemsEl.innerHTML = `<div class="text-red-400 text-sm">Error: ${result.message}</div>`;
+            }
+        } catch (e) {
+            itemsEl.innerHTML = `<div class="text-red-400 text-sm">Detection failed: ${e.message}</div>`;
+        }
+    }
+    
+    function selectSerialPort(path) {
+        document.getElementById('mesh_serial_port').value = path;
+        document.getElementById('serial-ports-list').classList.add('hidden');
+        showAlert('Serial port set to ' + path + '. Click Save to apply.');
+    }
     
     async function testMesh() {
         const resultEl = document.getElementById('mesh-test-result');

@@ -829,3 +829,70 @@ async def test_kiwix_connection(request: Request):
             "status": "error",
             "message": f"Cannot connect: {str(e)}"
         }
+
+
+@api_router.get("/admin/detect/serial")
+async def detect_serial_ports(request: Request):
+    """Detect available serial ports for Meshtastic devices."""
+    check_admin_auth(request)
+    
+    import glob
+    import platform
+    
+    ports = []
+    system = platform.system()
+    
+    if system == "Darwin":  # macOS
+        # Look for USB modems (Meshtastic devices)
+        patterns = [
+            "/dev/cu.usbmodem*",
+            "/dev/cu.usbserial*",
+            "/dev/cu.SLAB*",
+            "/dev/cu.wchusbserial*"
+        ]
+    elif system == "Linux":
+        patterns = [
+            "/dev/ttyUSB*",
+            "/dev/ttyACM*",
+            "/dev/serial/by-id/*"
+        ]
+    else:  # Windows
+        # On Windows, use serial.tools.list_ports
+        try:
+            import serial.tools.list_ports
+            for port in serial.tools.list_ports.comports():
+                ports.append({
+                    "path": port.device,
+                    "description": port.description,
+                    "manufacturer": port.manufacturer or ""
+                })
+            return {"status": "ok", "ports": ports}
+        except:
+            return {"status": "error", "message": "Cannot detect ports on Windows", "ports": []}
+    
+    # Find matching ports
+    for pattern in patterns:
+        for path in glob.glob(pattern):
+            # Try to get more info about the device
+            description = ""
+            if "usbmodem" in path:
+                description = "USB Modem (likely Meshtastic)"
+            elif "usbserial" in path:
+                description = "USB Serial"
+            elif "SLAB" in path:
+                description = "Silicon Labs USB"
+            
+            ports.append({
+                "path": path,
+                "description": description,
+                "manufacturer": ""
+            })
+    
+    # Sort by path
+    ports.sort(key=lambda x: x["path"])
+    
+    return {
+        "status": "ok",
+        "ports": ports,
+        "current": config.mesh.serial_port
+    }
