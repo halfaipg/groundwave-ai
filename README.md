@@ -55,6 +55,7 @@ If you're starting fresh, consider waiting for MeshCore support or running both 
 - **Live Dashboard** — Real-time node status, messages, weather
 - **Network Status** — See all nodes, signal strength, battery levels
 - **Send Messages** — Interact with the mesh from any browser
+- **Admin Panel** — Configure everything from your browser
 - **Mobile Friendly** — Responsive design for all devices
 
 ### Regional MQTT (Optional)
@@ -126,6 +127,49 @@ python run.py
 ```
 
 Open http://localhost:8000 in your browser.
+
+---
+
+## Admin Panel
+
+Access the admin panel at http://localhost:8000/admin to configure your node without editing config files.
+
+### Features
+
+- **Serial Port Detection** — Auto-detect USB modems with one click
+- **Community Branding** — Set network name, location, bot identity
+- **Mesh Settings** — Protocol, connection type, chunk sizes
+- **LLM Configuration** — Provider, URL, model selection
+- **Weather Settings** — Location search by city/zip, units
+- **Regional MQTT** — Connect to regional mesh networks
+- **Kiwix Setup** — Configure offline Wikipedia
+
+### Security
+
+The admin panel is protected by:
+
+1. **Password** — Set `ADMIN_PASSWORD` in `.env` (default: `changeme`)
+2. **IP Restriction** — Control who can access admin:
+
+| Setting | Access |
+|---------|--------|
+| `localhost` | Only from the machine running groundwave |
+| `local` | LAN IPs (192.168.x.x, 10.x.x.x, etc.) |
+| `all` | Anyone (use with caution!) |
+
+Set `ADMIN_ACCESS` in `.env` or `admin_access` in `config.yaml`.
+
+### Serial Port Auto-Detection
+
+In the Mesh Connection section, click **Detect** to scan for USB devices:
+
+1. Plug in your Meshtastic device
+2. Go to Admin > Mesh Connection
+3. Click the **Detect** button
+4. Select your device from the list
+5. Click **Save**
+
+No more hunting for `/dev/cu.usbmodem...` paths!
 
 ---
 
