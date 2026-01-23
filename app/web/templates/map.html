@@ -65,6 +65,10 @@
         border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
     
+    .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+        filter: invert(1) !important;
+    }
+    
     .maplibregl-ctrl-attrib {
         background: rgba(15, 20, 25, 0.7) !important;
         color: #6b7280 !important;
@@ -178,6 +182,8 @@
     .fit-bounds-btn:hover {
         background: rgba(255, 255, 255, 0.1) !important;
     }
+    
+    /* Style toggle - positioned via JS as a map control */
 </style>
 {% endblock %}
 
@@ -199,7 +205,7 @@
     <div id="with-gps-count" class="hidden">0</div>
     
     <!-- Map Container -->
-    <div class="glass rounded-2xl p-2 mb-4 overflow-hidden">
+    <div class="glass rounded-2xl p-2 mb-4 overflow-hidden relative">
         <div id="map"></div>
     </div>
     
@@ -366,9 +372,95 @@
         antialias: true
     });
     
-    // Add navigation controls
+    // Map styles
+    const MAP_STYLES = {
+        detailed: {
+            version: 8,
+            sources: {
+                'osm': {
+                    type: 'raster',
+                    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }
+            },
+            layers: [{ id: 'osm-layer', type: 'raster', source: 'osm', minzoom: 0, maxzoom: 19 }]
+        },
+        flat: {
+            version: 8,
+            sources: {
+                'carto': {
+                    type: 'raster',
+                    tiles: ['https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    attribution: '&copy; CARTO'
+                }
+            },
+            layers: [{ id: 'carto-layer', type: 'raster', source: 'carto', minzoom: 0, maxzoom: 19 }]
+        }
+    };
+    
+    let currentStyle = 'detailed';
+    
+    function switchStyle(styleName) {
+        if (styleName === currentStyle) return;
+        currentStyle = styleName;
+        
+        // Change the base layer
+        const sourceId = styleName === 'detailed' ? 'osm' : 'carto';
+        const layerId = styleName === 'detailed' ? 'osm-layer' : 'carto-layer';
+        
+        // Remove old base layer
+        if (map.getLayer('osm-layer')) map.removeLayer('osm-layer');
+        if (map.getLayer('carto-layer')) map.removeLayer('carto-layer');
+        if (map.getSource('osm')) map.removeSource('osm');
+        if (map.getSource('carto')) map.removeSource('carto');
+        
+        // Add new base layer (insert at bottom)
+        map.addSource(sourceId, MAP_STYLES[styleName].sources[sourceId]);
+        
+        // Get first layer id to insert before
+        const layers = map.getStyle().layers;
+        const firstLayerId = layers.length > 0 ? layers[0].id : undefined;
+        
+        map.addLayer({
+            id: layerId,
+            type: 'raster',
+            source: sourceId,
+            minzoom: 0,
+            maxzoom: 19
+        }, firstLayerId);
+    }
+    
+    // Custom style toggle control
+    class StyleToggleControl {
+        onAdd(map) {
+            this._map = map;
+            this._container = document.createElement('div');
+            this._container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+            
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.title = 'Toggle map style';
+            button.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>';
+            button.style.cssText = 'width: 29px; height: 29px; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+            button.addEventListener('click', () => {
+                const newStyle = currentStyle === 'detailed' ? 'flat' : 'detailed';
+                switchStyle(newStyle);
+            });
+            
+            this._container.appendChild(button);
+            return this._container;
+        }
+        onRemove() {
+            this._container.parentNode.removeChild(this._container);
+            this._map = undefined;
+        }
+    }
+    
+    // Add navigation controls (without compass)
     map.addControl(new maplibregl.NavigationControl({
-        visualizePitch: true
+        showCompass: false
     }), 'top-right');
     
     // Add scale
@@ -379,6 +471,9 @@
     
     // Add fullscreen control
     map.addControl(new maplibregl.FullscreenControl(), 'top-right');
+    
+    // Add style toggle control
+    map.addControl(new StyleToggleControl(), 'top-right');
     
     // Stats tracking
     let stats = { local: 0, regional: 0, online: 0, withGps: 0 };
