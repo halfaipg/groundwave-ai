@@ -49,8 +49,9 @@ async def get_live_context() -> str:
         return "\n".join(lines)
     
     # Fetch fresh data
+    from ..config import config
     lines = []
-    lines.append(f"Location: Bay Village, Ohio")
+    lines.append(f"Location: {config.web.location_name}")
     
     # Current weather
     try:

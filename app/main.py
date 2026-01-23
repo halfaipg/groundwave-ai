@@ -185,7 +185,7 @@ async def lifespan(app: FastAPI):
     # Create command router
     app_state.command_router = CommandRouter(app_state.mesh)
     
-    # Start regional MQTT service (optional, for Ohio network)
+    # Start regional MQTT service (optional, for regional network awareness)
     mqtt_config = {
         'mqtt': {
             'enabled': config.mqtt.enabled,

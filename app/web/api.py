@@ -173,6 +173,88 @@ async def get_nodes():
     ]
 
 
+@api_router.get("/stats/top")
+async def get_top_talkers(limit: int = Query(default=20, le=100)):
+    """Get top nodes by message count."""
+    from datetime import datetime, timedelta
+    from sqlalchemy import func, and_
+    
+    # Get messages from last 24 hours using efficient query
+    since = datetime.utcnow() - timedelta(hours=24)
+    
+    async with await db.get_session() as session:
+        # Count messages per node in last 24h
+        from ..database import Message
+        query = (
+            select(Message.from_id, Message.from_name, func.count(Message.id).label('count'))
+            .where(and_(Message.timestamp >= since, Message.from_id.isnot(None)))
+            .group_by(Message.from_id, Message.from_name)
+            .order_by(func.count(Message.id).desc())
+            .limit(limit)
+        )
+        result = await session.execute(query)
+        rows = result.all()
+    
+    # Enrich with node info
+    from ..main import app_state
+    nodes_list = []
+    for row in rows:
+        node_info = {
+            "node_id": row.from_id,
+            "name": row.from_name or row.from_id,
+            "message_count": row.count,
+            "short_name": None,
+            "hardware": None,
+            "is_online": False
+        }
+        
+        # Try to get node details from mesh
+        if app_state.mesh:
+            for node in app_state.mesh.get_all_nodes():
+                if str(node.node_id) == str(row.from_id):
+                    node_info["short_name"] = node.short_name
+                    node_info["hardware"] = node.hardware
+                    node_info["is_online"] = node.is_online
+                    break
+        
+        nodes_list.append(node_info)
+    
+    return {"nodes": nodes_list, "total": len(nodes_list)}
+
+
+@api_router.get("/stats/summary")
+async def get_stats_summary():
+    """Get network statistics summary."""
+    from ..main import app_state
+    
+    # Node stats
+    local_nodes = []
+    if app_state.mesh:
+        local_nodes = app_state.mesh.get_all_nodes()
+    
+    online_count = sum(1 for n in local_nodes if n.is_online)
+    hardware_breakdown = {}
+    for node in local_nodes:
+        hw = node.hardware or "Unknown"
+        hardware_breakdown[hw] = hardware_breakdown.get(hw, 0) + 1
+    
+    # Message stats
+    all_messages = await db.get_messages(limit=10000)
+    total_messages = len(all_messages)
+    
+    from datetime import datetime, timedelta
+    since_24h = datetime.utcnow() - timedelta(hours=24)
+    messages_24h = [m for m in all_messages if m.timestamp and m.timestamp >= since_24h]
+    
+    return {
+        "total_nodes": len(local_nodes),
+        "online_nodes": online_count,
+        "total_messages": total_messages,
+        "messages_24h": len(messages_24h),
+        "hardware_breakdown": hardware_breakdown
+    }
+
+
 @api_router.post("/send")
 async def send_message(request: SendMessageRequest):
     """Send a message to the mesh network."""
@@ -344,7 +426,7 @@ async def broadcast_node_update(node: dict):
 
 
 # =============================================================================
-# Regional MQTT Endpoints (Ohio Meshtastic Network)
+# Regional MQTT Endpoints
 # =============================================================================
 
 @api_router.get("/regional/nodes")
@@ -352,7 +434,7 @@ async def get_regional_nodes():
     """Get nodes discovered via regional MQTT.
     
     This is SEPARATE from your local mesh - these are nodes
-    discovered from the Ohio Meshtastic MQTT feed.
+    discovered from the regional MQTT feed.
     """
     from ..services.mqtt_regional import mqtt_regional
     
@@ -398,7 +480,7 @@ async def get_regional_node(node_id: str):
 async def get_regional_messages(limit: int = Query(50, le=100)):
     """Get recent text messages from the regional MQTT feed.
     
-    These are messages sent by nodes on the Ohio network.
+    These are messages sent by nodes on the regional network.
     """
     from ..services.mqtt_regional import mqtt_regional
     

@@ -1,0 +1,713 @@
+{% extends "base.html" %}
+
+{% block head %}
+<!-- MapLibre GL JS -->
+<link href="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@4.1.2/dist/maplibre-gl.js"></script>
+
+<style>
+    #map {
+        height: calc(100vh - 220px);
+        min-height: 500px;
+        width: 100%;
+        border-radius: 1rem;
+    }
+    
+    /* Smooth dark theme for map container */
+    .maplibregl-map {
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+    
+    /* Custom popup styling */
+    .maplibregl-popup-content {
+        background: rgba(15, 20, 25, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        padding: 0 !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+        backdrop-filter: blur(10px);
+    }
+    
+    .maplibregl-popup-tip {
+        border-top-color: rgba(15, 20, 25, 0.95) !important;
+    }
+    
+    .maplibregl-popup-close-button {
+        color: #9ca3af !important;
+        font-size: 18px !important;
+        padding: 4px 8px !important;
+    }
+    
+    .maplibregl-popup-close-button:hover {
+        color: white !important;
+        background: transparent !important;
+    }
+    
+    /* Control buttons */
+    .maplibregl-ctrl-group {
+        background: rgba(15, 20, 25, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px !important;
+        overflow: hidden;
+    }
+    
+    .maplibregl-ctrl-group button {
+        background: transparent !important;
+        border: none !important;
+        color: white !important;
+    }
+    
+    .maplibregl-ctrl-group button:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .maplibregl-ctrl-group button + button {
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .maplibregl-ctrl-attrib {
+        background: rgba(15, 20, 25, 0.7) !important;
+        color: #6b7280 !important;
+        font-size: 10px !important;
+    }
+    
+    .maplibregl-ctrl-attrib a {
+        color: #9ca3af !important;
+    }
+    
+    /* Node popup */
+    .node-popup {
+        padding: 16px;
+        min-width: 200px;
+        color: white;
+    }
+    
+    .node-popup h3 {
+        margin: 0 0 4px 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: white;
+    }
+    
+    .node-popup .node-id {
+        font-family: 'SF Mono', Monaco, monospace;
+        font-size: 11px;
+        color: #6b7280;
+        margin-bottom: 12px;
+    }
+    
+    .node-popup .badges {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+    }
+    
+    .node-popup .badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-online { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .badge-offline { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+    .badge-local { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .badge-regional { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .badge-you { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    
+    .node-popup .node-info {
+        font-size: 12px;
+        color: #d1d5db;
+    }
+    
+    .node-popup .node-info div {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .node-popup .node-info div:last-child {
+        border-bottom: none;
+    }
+    
+    .node-popup .info-label {
+        color: #6b7280;
+        min-width: 70px;
+    }
+    
+    .node-popup .info-value {
+        color: #e5e7eb;
+    }
+    
+    /* Pulse animation for your node */
+    @keyframes pulse-ring {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(2.5); opacity: 0; }
+    }
+    
+    .my-node-pulse {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.4);
+        animation: pulse-ring 2s ease-out infinite;
+    }
+    
+    /* Custom fit bounds button */
+    .fit-bounds-btn {
+        background: rgba(15, 20, 25, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px !important;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: white;
+        font-size: 16px;
+        transition: background 0.2s;
+    }
+    
+    .fit-bounds-btn:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Network Map</h1>
+        <p class="text-gray-400">
+            Live mesh node locations
+            <span id="node-count" class="text-mesh-400 ml-1"></span>
+        </p>
+    </div>
+    
+    <!-- Map Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-green-400" id="local-count">0</div>
+            <div class="text-xs text-gray-400 mt-1">Local Nodes</div>
+        </div>
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-blue-400" id="regional-count">0</div>
+            <div class="text-xs text-gray-400 mt-1">Regional MQTT</div>
+        </div>
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-emerald-400" id="online-count">0</div>
+            <div class="text-xs text-gray-400 mt-1">Online Now</div>
+        </div>
+        <div class="glass rounded-xl p-4 text-center">
+            <div class="text-2xl font-bold text-amber-400" id="with-gps-count">0</div>
+            <div class="text-xs text-gray-400 mt-1">With Position</div>
+        </div>
+    </div>
+    
+    <!-- Map Container -->
+    <div class="glass rounded-2xl p-2 mb-4 overflow-hidden">
+        <div id="map"></div>
+    </div>
+    
+    <!-- Legend -->
+    <div class="flex flex-wrap items-center gap-6 text-sm text-gray-400 mb-8">
+        <div class="flex items-center gap-2">
+            <div class="w-4 h-4 rounded-full bg-green-500 shadow-lg shadow-green-500/30"></div>
+            <span>Local Mesh</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="w-4 h-4 rounded-full bg-blue-500 shadow-lg shadow-blue-500/30"></div>
+            <span>Regional MQTT</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="relative">
+                <div class="w-4 h-4 rounded-full bg-red-500 shadow-lg shadow-red-500/50"></div>
+                <div class="absolute inset-0 w-4 h-4 rounded-full bg-red-500 animate-ping opacity-75"></div>
+            </div>
+            <span>{{ bot_name or 'Your Node' }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="w-4 h-4 rounded-full bg-gray-500 opacity-50"></div>
+            <span>Offline</span>
+        </div>
+    </div>
+    
+    <!-- Network Statistics -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-white mb-4">Network Statistics</h2>
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div class="glass rounded-xl p-4">
+                <div class="text-sm text-gray-400 mb-1">Total Nodes</div>
+                <div class="text-2xl font-bold text-white" id="stat-total-nodes">0</div>
+            </div>
+            <div class="glass rounded-xl p-4">
+                <div class="text-sm text-gray-400 mb-1">Online Now</div>
+                <div class="text-2xl font-bold text-green-400" id="stat-online-nodes">0</div>
+            </div>
+            <div class="glass rounded-xl p-4">
+                <div class="text-sm text-gray-400 mb-1">Total Messages</div>
+                <div class="text-2xl font-bold text-blue-400" id="stat-total-messages">0</div>
+            </div>
+            <div class="glass rounded-xl p-4">
+                <div class="text-sm text-gray-400 mb-1">Last 24h</div>
+                <div class="text-2xl font-bold text-amber-400" id="stat-messages-24h">0</div>
+            </div>
+        </div>
+        
+        <!-- Top Talkers Table -->
+        <div class="glass rounded-xl p-6 mb-6">
+            <h3 class="text-lg font-semibold text-white mb-4">Top Talkers (Last 24 Hours)</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="text-left py-3 px-4 text-gray-400 font-medium">Rank</th>
+                            <th class="text-left py-3 px-4 text-gray-400 font-medium">Node</th>
+                            <th class="text-left py-3 px-4 text-gray-400 font-medium">Name</th>
+                            <th class="text-left py-3 px-4 text-gray-400 font-medium">Hardware</th>
+                            <th class="text-right py-3 px-4 text-gray-400 font-medium">Messages</th>
+                            <th class="text-center py-3 px-4 text-gray-400 font-medium">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-talkers-body" class="text-gray-300">
+                        <tr>
+                            <td colspan="6" class="py-8 text-center text-gray-500">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Hardware Breakdown -->
+        <div class="glass rounded-xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">Hardware Breakdown</h3>
+            <div id="hardware-breakdown" class="flex flex-wrap gap-3">
+                <div class="text-gray-500">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Config from server
+    const DEFAULT_LAT = {{ default_lat }};
+    const DEFAULT_LON = {{ default_lon }};
+    const MY_NODE_ID = "{{ my_node_id or '' }}";
+    
+    // Initialize MapLibre GL map with colorful OpenStreetMap style
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: {
+            version: 8,
+            sources: {
+                'osm': {
+                    type: 'raster',
+                    tiles: [
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+                    ],
+                    tileSize: 256,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }
+            },
+            layers: [{
+                id: 'osm-layer',
+                type: 'raster',
+                source: 'osm',
+                minzoom: 0,
+                maxzoom: 19
+            }]
+        },
+        center: [DEFAULT_LON, DEFAULT_LAT],
+        zoom: 11,
+        pitch: 0,
+        bearing: 0,
+        antialias: true
+    });
+    
+    // Add navigation controls
+    map.addControl(new maplibregl.NavigationControl({
+        visualizePitch: true
+    }), 'top-right');
+    
+    // Add scale
+    map.addControl(new maplibregl.ScaleControl({
+        maxWidth: 100,
+        unit: 'imperial'
+    }), 'bottom-left');
+    
+    // Add fullscreen control
+    map.addControl(new maplibregl.FullscreenControl(), 'top-right');
+    
+    // Stats tracking
+    let stats = { local: 0, regional: 0, online: 0, withGps: 0 };
+    
+    // Store node data for popups
+    let nodeData = {};
+    
+    // Format time ago
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        if (seconds < 60) return 'just now';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+        return `${Math.floor(seconds / 86400)}d ago`;
+    }
+    
+    // Create popup HTML
+    function createPopupHTML(node) {
+        const isOnline = node.properties.is_online !== false;
+        const isMyNode = node.properties.is_my_node;
+        const source = node.properties.source;
+        
+        let badges = '';
+        if (isMyNode) badges += '<span class="badge badge-you">You</span>';
+        badges += isOnline ? '<span class="badge badge-online">Online</span>' : '<span class="badge badge-offline">Offline</span>';
+        badges += source === 'local' ? '<span class="badge badge-local">Local</span>' : '<span class="badge badge-regional">Regional</span>';
+        
+        let info = '';
+        if (node.properties.hardware) info += `<div><span class="info-label">Hardware</span><span class="info-value">${node.properties.hardware}</span></div>`;
+        if (node.properties.battery_level != null) {
+            const icon = node.properties.battery_level > 50 ? '🔋' : node.properties.battery_level > 20 ? '🪫' : '⚠️';
+            info += `<div><span class="info-label">Battery</span><span class="info-value">${icon} ${node.properties.battery_level}%</span></div>`;
+        }
+        if (node.properties.snr != null) {
+            const quality = node.properties.snr > 5 ? '🟢' : node.properties.snr > 0 ? '🟡' : '🔴';
+            info += `<div><span class="info-label">Signal</span><span class="info-value">${quality} ${node.properties.snr.toFixed(1)} dB</span></div>`;
+        }
+        if (node.properties.hops_away != null) info += `<div><span class="info-label">Hops</span><span class="info-value">${node.properties.hops_away}</span></div>`;
+        if (node.properties.last_seen) info += `<div><span class="info-label">Last seen</span><span class="info-value">${getTimeAgo(new Date(node.properties.last_seen))}</span></div>`;
+        
+        return `
+            <div class="node-popup">
+                <h3>${node.properties.name || 'Unknown Node'}</h3>
+                <div class="node-id">${node.properties.short_name ? `[${node.properties.short_name}] ` : ''}${node.properties.node_id}</div>
+                <div class="badges">${badges}</div>
+                ${info ? `<div class="node-info">${info}</div>` : ''}
+            </div>
+        `;
+    }
+    
+    // Setup map layers when loaded
+    map.on('load', () => {
+        // Add GeoJSON sources for nodes
+        map.addSource('local-nodes', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+        
+        map.addSource('regional-nodes', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+        
+        map.addSource('my-node', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+        
+        // Regional nodes - blue circles
+        map.addLayer({
+            id: 'regional-nodes-layer',
+            type: 'circle',
+            source: 'regional-nodes',
+            paint: {
+                'circle-radius': 8,
+                'circle-color': '#3b82f6',
+                'circle-stroke-color': '#ffffff',
+                'circle-stroke-width': 2,
+                'circle-opacity': ['case', ['get', 'is_online'], 1, 0.5]
+            }
+        });
+        
+        // Local nodes - green circles
+        map.addLayer({
+            id: 'local-nodes-layer',
+            type: 'circle',
+            source: 'local-nodes',
+            paint: {
+                'circle-radius': 8,
+                'circle-color': '#22c55e',
+                'circle-stroke-color': '#ffffff',
+                'circle-stroke-width': 2,
+                'circle-opacity': ['case', ['get', 'is_online'], 1, 0.5]
+            }
+        });
+        
+        // My node - red circle with glow effect (larger)
+        map.addLayer({
+            id: 'my-node-glow',
+            type: 'circle',
+            source: 'my-node',
+            paint: {
+                'circle-radius': 20,
+                'circle-color': '#ef4444',
+                'circle-opacity': 0.3,
+                'circle-blur': 1
+            }
+        });
+        
+        map.addLayer({
+            id: 'my-node-layer',
+            type: 'circle',
+            source: 'my-node',
+            paint: {
+                'circle-radius': 10,
+                'circle-color': '#ef4444',
+                'circle-stroke-color': '#ffffff',
+                'circle-stroke-width': 3
+            }
+        });
+        
+        // Popup on click
+        const popup = new maplibregl.Popup({
+            closeButton: true,
+            closeOnClick: true,
+            maxWidth: '280px'
+        });
+        
+        ['local-nodes-layer', 'regional-nodes-layer', 'my-node-layer'].forEach(layerId => {
+            map.on('click', layerId, (e) => {
+                const feature = e.features[0];
+                popup.setLngLat(feature.geometry.coordinates)
+                    .setHTML(createPopupHTML(feature))
+                    .addTo(map);
+            });
+            
+            map.on('mouseenter', layerId, () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+            
+            map.on('mouseleave', layerId, () => {
+                map.getCanvas().style.cursor = '';
+            });
+        });
+        
+        // Initial load
+        loadNodes();
+    });
+    
+    // Convert node to GeoJSON feature
+    function nodeToFeature(node, source) {
+        const lat = node.latitude || (node.last_lat ? node.last_lat * 1e-7 : null);
+        const lon = node.longitude || (node.last_long ? node.last_long * 1e-7 : null);
+        
+        if (!lat || !lon || lat === 0 || lon === 0) return null;
+        
+        const isMyNode = node.node_id === MY_NODE_ID || node.node_id === parseInt(MY_NODE_ID);
+        
+        return {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [lon, lat] },
+            properties: {
+                node_id: node.node_id,
+                name: node.long_name || node.short_name || 'Unknown',
+                short_name: node.short_name,
+                hardware: node.hardware || node.hw_model,
+                battery_level: node.battery_level,
+                snr: node.snr || node.last_snr,
+                hops_away: node.hops_away,
+                is_online: node.is_online !== false,
+                is_my_node: isMyNode,
+                source: source,
+                last_seen: node.last_heard || node.last_seen
+            }
+        };
+    }
+    
+    // Load and display all nodes
+    async function loadNodes() {
+        stats = { local: 0, regional: 0, online: 0, withGps: 0 };
+        
+        const localFeatures = [];
+        const regionalFeatures = [];
+        const myNodeFeatures = [];
+        const bounds = new maplibregl.LngLatBounds();
+        let hasValidBounds = false;
+        
+        // Fetch local nodes
+        try {
+            const response = await fetch('/api/nodes');
+            if (response.ok) {
+                const nodes = await response.json();
+                nodes.forEach(node => {
+                    stats.local++;
+                    if (node.is_online) stats.online++;
+                    
+                    const feature = nodeToFeature(node, 'local');
+                    if (feature) {
+                        stats.withGps++;
+                        bounds.extend(feature.geometry.coordinates);
+                        hasValidBounds = true;
+                        
+                        if (feature.properties.is_my_node) {
+                            myNodeFeatures.push(feature);
+                        } else {
+                            localFeatures.push(feature);
+                        }
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('Failed to load local nodes:', e);
+        }
+        
+        // Fetch regional MQTT nodes
+        try {
+            const response = await fetch('/api/regional/nodes');
+            if (response.ok) {
+                const nodes = await response.json();
+                nodes.forEach(node => {
+                    stats.regional++;
+                    
+                    const feature = nodeToFeature(node, 'regional');
+                    if (feature) {
+                        stats.withGps++;
+                        bounds.extend(feature.geometry.coordinates);
+                        hasValidBounds = true;
+                        regionalFeatures.push(feature);
+                    }
+                });
+            }
+        } catch (e) {
+            console.log('Regional MQTT not available');
+        }
+        
+        // Update map sources
+        if (map.getSource('local-nodes')) {
+            map.getSource('local-nodes').setData({ type: 'FeatureCollection', features: localFeatures });
+        }
+        if (map.getSource('regional-nodes')) {
+            map.getSource('regional-nodes').setData({ type: 'FeatureCollection', features: regionalFeatures });
+        }
+        if (map.getSource('my-node')) {
+            map.getSource('my-node').setData({ type: 'FeatureCollection', features: myNodeFeatures });
+        }
+        
+        // Update stats display
+        document.getElementById('local-count').textContent = stats.local;
+        document.getElementById('regional-count').textContent = stats.regional;
+        document.getElementById('online-count').textContent = stats.online;
+        document.getElementById('with-gps-count').textContent = stats.withGps;
+        document.getElementById('node-count').textContent = `(${stats.withGps} of ${stats.local + stats.regional} with position)`;
+        
+        return { bounds, hasValidBounds };
+    }
+    
+    // Fit map to show all nodes
+    function fitToNodes(bounds, hasValidBounds) {
+        if (hasValidBounds && !bounds.isEmpty()) {
+            map.fitBounds(bounds, { padding: 60, maxZoom: 14, duration: 1000 });
+        }
+    }
+    
+    // Add custom fit bounds control
+    class FitBoundsControl {
+        onAdd(map) {
+            this._map = map;
+            this._container = document.createElement('div');
+            this._container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.title = 'Fit all nodes';
+            button.innerHTML = '⊡';
+            button.style.cssText = 'width: 30px; height: 30px; font-size: 18px; cursor: pointer;';
+            button.addEventListener('click', async () => {
+                const { bounds, hasValidBounds } = await loadNodes();
+                fitToNodes(bounds, hasValidBounds);
+            });
+            this._container.appendChild(button);
+            return this._container;
+        }
+        onRemove() {
+            this._container.parentNode.removeChild(this._container);
+            this._map = undefined;
+        }
+    }
+    
+    map.addControl(new FitBoundsControl(), 'top-right');
+    
+    // Auto-refresh every 60 seconds
+    setInterval(loadNodes, 60000);
+    
+    // Handle WebSocket node updates
+    function onNodeUpdate(nodeData) { loadNodes(); }
+    
+    // Load network statistics
+    async function loadStats() {
+        try {
+            // Load summary stats
+            const summaryRes = await fetch('/api/stats/summary');
+            if (summaryRes.ok) {
+                const summary = await summaryRes.json();
+                document.getElementById('stat-total-nodes').textContent = summary.total_nodes || 0;
+                document.getElementById('stat-online-nodes').textContent = summary.online_nodes || 0;
+                document.getElementById('stat-total-messages').textContent = (summary.total_messages || 0).toLocaleString();
+                document.getElementById('stat-messages-24h').textContent = (summary.messages_24h || 0).toLocaleString();
+                
+                // Hardware breakdown
+                const hwBreakdown = summary.hardware_breakdown || {};
+                const hwEl = document.getElementById('hardware-breakdown');
+                if (Object.keys(hwBreakdown).length > 0) {
+                    hwEl.innerHTML = Object.entries(hwBreakdown)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([hw, count]) => `
+                            <div class="glass rounded-lg px-4 py-2">
+                                <div class="text-xs text-gray-400 mb-1">${hw}</div>
+                                <div class="text-lg font-bold text-white">${count}</div>
+                            </div>
+                        `).join('');
+                } else {
+                    hwEl.innerHTML = '<div class="text-gray-500">No hardware data available</div>';
+                }
+            }
+            
+            // Load top talkers
+            const topRes = await fetch('/api/stats/top?limit=10');
+            if (topRes.ok) {
+                const topData = await topRes.json();
+                const tbody = document.getElementById('top-talkers-body');
+                
+                if (topData.nodes && topData.nodes.length > 0) {
+                    tbody.innerHTML = topData.nodes.map((node, idx) => `
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-3 px-4 text-gray-400">#${idx + 1}</td>
+                            <td class="py-3 px-4 font-mono text-xs">${node.node_id}</td>
+                            <td class="py-3 px-4">
+                                <div class="font-medium">${node.name || 'Unknown'}</div>
+                                ${node.short_name ? `<div class="text-xs text-gray-500">[${node.short_name}]</div>` : ''}
+                            </td>
+                            <td class="py-3 px-4 text-gray-400">${node.hardware || '—'}</td>
+                            <td class="py-3 px-4 text-right font-semibold text-blue-400">${node.message_count}</td>
+                            <td class="py-3 px-4 text-center">
+                                ${node.is_online 
+                                    ? '<span class="px-2 py-1 rounded text-xs bg-green-500/20 text-green-400">Online</span>'
+                                    : '<span class="px-2 py-1 rounded text-xs bg-gray-500/20 text-gray-400">Offline</span>'}
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-500">No activity in the last 24 hours</td></tr>';
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load stats:', e);
+        }
+    }
+    
+    // Load stats on page load and refresh every 60 seconds
+    loadStats();
+    setInterval(loadStats, 60000);
+</script>
+{% endblock %}

@@ -164,6 +164,27 @@ async def bbs_page(request: Request, board: Optional[str] = None):
     return templates.TemplateResponse("bbs.html", context)
 
 
+@router.get("/map", response_class=HTMLResponse)
+async def map_page(request: Request):
+    """Interactive node map."""
+    from ..main import app_state
+    
+    context = get_common_context(request)
+    context["page_title"] = "Map"
+    
+    # Pass map center coordinates from weather config
+    context["default_lat"] = config.weather.default_lat
+    context["default_lon"] = config.weather.default_lon
+    
+    # Pass my node ID for highlighting
+    context["my_node_id"] = app_state.mesh.my_node_id if app_state.mesh else None
+    
+    # Pass bot name for "Your Node" label
+    context["bot_name"] = config.mesh.bot_short_name or config.mesh.bot_name
+    
+    return templates.TemplateResponse("map.html", context)
+
+
 @router.get("/help", response_class=HTMLResponse)
 async def help_page(request: Request):
     """Help and commands reference."""

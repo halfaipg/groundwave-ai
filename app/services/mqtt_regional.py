@@ -1,7 +1,7 @@
-"""Regional MQTT Integration for Ohio Meshtastic Network.
+"""Regional MQTT Integration for Regional Mesh Network.
 
 This service connects to the regional MQTT broker to collect node data
-from the broader Ohio mesh network. This is kept SEPARATE from local
+from the broader regional mesh network. This is kept SEPARATE from local
 mesh data - it's for regional awareness only.
 
 Decrypts encrypted Meshtastic protobuf messages using the default
@@ -119,7 +119,7 @@ class RegionalMessage:
 class MQTTRegionalService:
     """Service to collect regional mesh data via MQTT.
     
-    Connects to the Ohio Meshtastic MQTT broker and decrypts
+        Connects to the regional MQTT broker and decrypts
     encrypted protobuf messages to collect node information
     from the regional network.
     """
@@ -209,7 +209,7 @@ class MQTTRegionalService:
             self._connected = True
             self._connection_time = datetime.now()
             logger.info(f"Connected to regional MQTT broker")
-            # Subscribe to all Ohio traffic (encrypted protobuf)
+            # Subscribe to all regional traffic (encrypted protobuf)
             client.subscribe(self.topic)
             logger.info(f"Subscribed to {self.topic}")
         else:
