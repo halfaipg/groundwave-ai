@@ -8,6 +8,8 @@
 
 groundwave-ai is a self-hosted community platform for LoRa mesh networks. It provides an AI assistant powered by local or cloud LLMs, a bulletin board system, weather updates, and a web portal — all capable of running entirely offline.
 
+**Requires a physical LoRa device** (Meshtastic T-Deck, T-Beam, Heltec, RAK, etc.) connected via USB, TCP, or Bluetooth. This software runs on your computer and communicates with the mesh network through your radio.
+
 ![Homepage](docs/screenshots/homepage.png)
 
 ---
