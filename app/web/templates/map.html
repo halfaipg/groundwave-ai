@@ -184,6 +184,62 @@
     }
     
     /* Style toggle - positioned via JS as a map control */
+    
+    /* Measure tool */
+    .measure-active {
+        cursor: crosshair !important;
+    }
+    
+    .measure-tooltip {
+        background: rgba(15, 20, 25, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        padding: 6px 10px;
+        color: white;
+        font-size: 12px;
+        font-weight: 500;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+    
+    .measure-btn-active {
+        background: rgba(59, 130, 246, 0.3) !important;
+        color: #60a5fa !important;
+    }
+    
+    .measure-instructions {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(15, 20, 25, 0.95);
+        border: 1px solid rgba(59, 130, 246, 0.5);
+        border-radius: 8px;
+        padding: 10px 16px;
+        color: white;
+        font-size: 13px;
+        text-align: center;
+        z-index: 10;
+        pointer-events: none;
+        animation: fadeIn 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .measure-instructions .measure-icon-inline {
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+        vertical-align: middle;
+        fill: #60a5fa;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
 </style>
 {% endblock %}
 
@@ -474,6 +530,208 @@
     
     // Add style toggle control
     map.addControl(new StyleToggleControl(), 'top-right');
+    
+    // Distance measurement tool
+    let measureMode = false;
+    let measurePoints = [];
+    let measureMarkers = [];
+    let measureLine = null;
+    let measureTooltip = null;
+    
+    class MeasureControl {
+        onAdd(map) {
+            this._map = map;
+            this._container = document.createElement('div');
+            this._container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+            
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.id = 'measure-btn';
+            button.title = 'Measure distance';
+            // Measurement ruler icon
+            button.innerHTML = '<svg width="22" height="22" viewBox="0 0 122.88 82.26" fill="currentColor" style="filter: drop-shadow(0 0 0.5px currentColor);"><path d="M122.88,39.45V79.56a2.7,2.7,0,0,1-.76,1.87l-.08.08a2.67,2.67,0,0,1-1.86.75H2.7A2.74,2.74,0,0,1,.83,81.5l-.12-.13A2.72,2.72,0,0,1,0,79.56V39.45a2.74,2.74,0,0,1,.76-1.87l.13-.12a2.72,2.72,0,0,1,1.81-.71H120.18a2.68,2.68,0,0,1,1.87.76l.07.07a2.68,2.68,0,0,1,.76,1.87ZM107.07,77.2V58.13h5.06V77.2h5.69V41.81H5.06V77.2h5.69V66.69h5.06V77.2h5.64V58.13h5.06V77.2h5.65V66.69h5.05V77.2h5.65V58.13h5V77.2h5.65V66.69h5V77.2h5.65V58.13h5.06V77.2H75V66.69H80V77.2h5.64V58.13h5.06V77.2h5.65V66.69h5V77.2ZM122.31,24a3.2,3.2,0,1,1-6.4-.08l.32-20.74a3.21,3.21,0,0,1,6.41.07L122.31,24ZM6.65,24a3.21,3.21,0,1,1-6.41-.08L.56,3.17A3.21,3.21,0,1,1,7,3.24L6.65,24Zm94.12.27a3.21,3.21,0,0,1-4.2-4.85l3-2.61H23.28l3,2.61a3.21,3.21,0,0,1-4.2,4.85L12.57,16a3.2,3.2,0,0,1-.33-4.52l.3-.3,9.27-8.26a3.22,3.22,0,1,1,4.28,4.8l-3,2.64H99.77l-3-2.64a3.22,3.22,0,0,1,4.28-4.8l9.28,8.26.29.3a3.2,3.2,0,0,1-.33,4.52l-9.54,8.26Z"/></svg>';
+            button.style.cssText = 'width: 29px; height: 29px; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleMeasure();
+            });
+            
+            this._container.appendChild(button);
+            return this._container;
+        }
+        onRemove() {
+            this._container.parentNode.removeChild(this._container);
+            this._map = undefined;
+        }
+    }
+    
+    let instructionsEl = null;
+    
+    function showInstructions() {
+        if (instructionsEl) return;
+        instructionsEl = document.createElement('div');
+        instructionsEl.className = 'measure-instructions';
+        const iconSvg = '<svg class="measure-icon-inline" viewBox="0 0 122.88 82.26"><path d="M122.88,39.45V79.56a2.7,2.7,0,0,1-.76,1.87l-.08.08a2.67,2.67,0,0,1-1.86.75H2.7A2.74,2.74,0,0,1,.83,81.5l-.12-.13A2.72,2.72,0,0,1,0,79.56V39.45a2.74,2.74,0,0,1,.76-1.87l.13-.12a2.72,2.72,0,0,1,1.81-.71H120.18a2.68,2.68,0,0,1,1.87.76l.07.07a2.68,2.68,0,0,1,.76,1.87ZM107.07,77.2V58.13h5.06V77.2h5.69V41.81H5.06V77.2h5.69V66.69h5.06V77.2h5.64V58.13h5.06V77.2h5.65V66.69h5.05V77.2h5.65V58.13h5V77.2h5.65V66.69h5V77.2h5.65V58.13h5.06V77.2H75V66.69H80V77.2h5.64V58.13h5.06V77.2h5.65V66.69h5V77.2ZM122.31,24a3.2,3.2,0,1,1-6.4-.08l.32-20.74a3.21,3.21,0,0,1,6.41.07L122.31,24ZM6.65,24a3.21,3.21,0,1,1-6.41-.08L.56,3.17A3.21,3.21,0,1,1,7,3.24L6.65,24Zm94.12.27a3.21,3.21,0,0,1-4.2-4.85l3-2.61H23.28l3,2.61a3.21,3.21,0,0,1-4.2,4.85L12.57,16a3.2,3.2,0,0,1-.33-4.52l.3-.3,9.27-8.26a3.22,3.22,0,1,1,4.28,4.8l-3,2.64H99.77l-3-2.64a3.22,3.22,0,0,1,4.28-4.8l9.28,8.26.29.3a3.2,3.2,0,0,1-.33,4.52l-9.54,8.26Z"/></svg>';
+        instructionsEl.innerHTML = 'Click points on map to measure • Click ' + iconSvg + ' to reset';
+        document.getElementById('map').appendChild(instructionsEl);
+    }
+    
+    function hideInstructions() {
+        if (instructionsEl) {
+            instructionsEl.remove();
+            instructionsEl = null;
+        }
+    }
+    
+    function toggleMeasure() {
+        measureMode = !measureMode;
+        const btn = document.getElementById('measure-btn');
+        const mapCanvas = map.getCanvas();
+        
+        if (measureMode) {
+            btn.classList.add('measure-btn-active');
+            mapCanvas.style.cursor = 'crosshair';
+            clearMeasure();
+            showInstructions();
+        } else {
+            btn.classList.remove('measure-btn-active');
+            mapCanvas.style.cursor = '';
+            clearMeasure();
+            hideInstructions();
+        }
+    }
+    
+    // ESC key to exit measure mode
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && measureMode) {
+            toggleMeasure();
+        }
+    });
+    
+    function clearMeasure() {
+        measurePoints = [];
+        measureMarkers.forEach(m => m.remove());
+        measureMarkers = [];
+        if (measureLine && map.getSource('measure-line')) {
+            map.removeLayer('measure-line-layer');
+            map.removeSource('measure-line');
+            measureLine = null;
+        }
+        if (measureTooltip) {
+            measureTooltip.remove();
+            measureTooltip = null;
+        }
+    }
+    
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 3959; // Earth radius in miles
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+    
+    function formatDistance(miles) {
+        if (miles < 0.1) {
+            return `${Math.round(miles * 5280)} ft`;
+        } else if (miles < 1) {
+            return `${(miles * 5280).toFixed(0)} ft`;
+        } else {
+            return `${miles.toFixed(2)} mi`;
+        }
+    }
+    
+    function updateMeasureLine() {
+        if (measurePoints.length < 2) return;
+        
+        const coords = measurePoints.map(p => [p.lng, p.lat]);
+        
+        if (map.getSource('measure-line')) {
+            map.getSource('measure-line').setData({
+                type: 'Feature',
+                geometry: { type: 'LineString', coordinates: coords }
+            });
+        } else {
+            map.addSource('measure-line', {
+                type: 'geojson',
+                data: {
+                    type: 'Feature',
+                    geometry: { type: 'LineString', coordinates: coords }
+                }
+            });
+            map.addLayer({
+                id: 'measure-line-layer',
+                type: 'line',
+                source: 'measure-line',
+                paint: {
+                    'line-color': '#3b82f6',
+                    'line-width': 3,
+                    'line-dasharray': [2, 1]
+                }
+            });
+            measureLine = true;
+        }
+        
+        // Calculate total distance
+        let totalDist = 0;
+        for (let i = 1; i < measurePoints.length; i++) {
+            totalDist += calculateDistance(
+                measurePoints[i-1].lat, measurePoints[i-1].lng,
+                measurePoints[i].lat, measurePoints[i].lng
+            );
+        }
+        
+        // Update or create tooltip at last point
+        const lastPoint = measurePoints[measurePoints.length - 1];
+        if (measureTooltip) {
+            measureTooltip.setLngLat([lastPoint.lng, lastPoint.lat])
+                .setHTML(`<div class="measure-tooltip">${formatDistance(totalDist)}</div>`);
+        } else {
+            measureTooltip = new maplibregl.Popup({
+                closeButton: false,
+                closeOnClick: false,
+                offset: [0, -10]
+            })
+            .setLngLat([lastPoint.lng, lastPoint.lat])
+            .setHTML(`<div class="measure-tooltip">${formatDistance(totalDist)}</div>`)
+            .addTo(map);
+        }
+    }
+    
+    // Handle map clicks for measuring
+    map.on('click', (e) => {
+        if (!measureMode) return;
+        
+        measurePoints.push({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+        
+        // Add marker
+        const el = document.createElement('div');
+        el.style.cssText = 'width: 12px; height: 12px; background: #3b82f6; border: 2px solid white; border-radius: 50%; cursor: pointer;';
+        
+        const marker = new maplibregl.Marker({ element: el })
+            .setLngLat([e.lngLat.lng, e.lngLat.lat])
+            .addTo(map);
+        measureMarkers.push(marker);
+        
+        updateMeasureLine();
+    });
+    
+    // Double-click to finish and clear
+    map.on('dblclick', (e) => {
+        if (measureMode) {
+            e.preventDefault();
+            // Keep the measurement visible, just exit measure mode
+            measureMode = false;
+            document.getElementById('measure-btn').classList.remove('measure-btn-active');
+            map.getCanvas().style.cursor = '';
+            hideInstructions();
+        }
+    });
+    
+    map.addControl(new MeasureControl(), 'top-right');
     
     // Stats tracking
     let stats = { local: 0, regional: 0, online: 0, withGps: 0 };
