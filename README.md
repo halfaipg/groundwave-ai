@@ -8,6 +8,8 @@
 
 groundwave-ai is a self-hosted community platform for LoRa mesh networks. It provides an AI assistant powered by local or cloud LLMs, a bulletin board system, weather updates, and a web portal — all capable of running entirely offline.
 
+![Homepage](docs/screenshots/homepage.png)
+
 ---
 
 ## Protocol Support
@@ -54,9 +56,21 @@ If you're starting fresh, consider waiting for MeshCore support or running both 
 ### Web Portal
 - **Live Dashboard** — Real-time node status, messages, weather
 - **Network Status** — See all nodes, signal strength, battery levels
+- **Interactive Map** — View node locations with distance measurement
 - **Send Messages** — Interact with the mesh from any browser
 - **Admin Panel** — Configure everything from your browser
 - **Mobile Friendly** — Responsive design for all devices
+
+<details>
+<summary>View Screenshots</summary>
+
+**Status Page**
+![Status](docs/screenshots/status.png)
+
+**Network Map**
+![Map](docs/screenshots/map.png)
+
+</details>
 
 ### Regional MQTT (Optional)
 - Connect to regional Meshtastic MQTT servers
