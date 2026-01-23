@@ -1,5 +1,8 @@
 # groundwave-ai Configuration
 # ═══════════════════════════════════════════════════════════
+# Offline AI Assistant & BBS for LoRa Mesh Networks
+# No cloud. No internet. Just radio.
+# 
 # Copy this file to config.yaml and customize for your deployment
 # Secrets and deployment-specific settings go in .env file
 # ═══════════════════════════════════════════════════════════
@@ -79,9 +82,9 @@ web:
   # logo_small: /static/logo-small.png
   
   # Homepage "About" section - customize your network's mission
-  about_heading: "Built for Reliability"
-  about_text: "A platform with useful services that work without terrestrial internet. Local AI, offline weather data, and resilient connectivity. No cloud dependencies, no data harvesting."
-  about_footer: ""  # Optional, e.g., "AI powered by Llama 3"
+  about_heading: "Built for When It Matters"
+  about_text: "A resilient platform that works without terrestrial internet. Local AI, offline knowledge, and mesh connectivity. Your community stays connected when traditional infrastructure fails."
+  about_footer: "Powered by local LLM - your data never leaves the network"
   
   # Page titles and descriptions
   meta:
