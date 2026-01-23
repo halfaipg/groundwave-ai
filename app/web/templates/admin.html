@@ -84,6 +84,31 @@
                            class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none">
                 </div>
             </div>
+            
+            <!-- About Section -->
+            <div class="mt-6 pt-6 border-t border-white/10">
+                <h3 class="text-sm font-semibold text-gray-300 mb-4">Homepage About Section</h3>
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Heading</label>
+                        <input type="text" id="about_heading" value="{{ config.web.about_heading }}" 
+                               class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none"
+                               placeholder="e.g., Built for Reliability">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Description</label>
+                        <textarea id="about_text" rows="3"
+                                  class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none resize-none"
+                                  placeholder="Describe your network's mission...">{{ config.web.about_text }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Footer (optional)</label>
+                        <input type="text" id="about_footer" value="{{ config.web.about_footer }}" 
+                               class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:border-mesh-500 focus:outline-none"
+                               placeholder="e.g., AI powered by Llama 3">
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Mesh Connection Section -->
@@ -438,7 +463,10 @@ curl -L "https://download.kiwix.org/zim/wikipedia/wikipedia_en_simple_all_nopic_
             community_description: document.getElementById('community_description').value,
             location_name: document.getElementById('location_name').value,
             bot_short_name: document.getElementById('bot_short_name').value,
-            bot_long_name: document.getElementById('bot_long_name').value
+            bot_long_name: document.getElementById('bot_long_name').value,
+            about_heading: document.getElementById('about_heading').value,
+            about_text: document.getElementById('about_text').value,
+            about_footer: document.getElementById('about_footer').value
         });
         showAlert(result.message);
     }

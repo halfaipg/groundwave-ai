@@ -40,6 +40,10 @@ def get_common_context(request: Request) -> dict:
         # MQTT
         "mqtt_enabled": config.mqtt.enabled,
         "mqtt_region_name": config.mqtt.region_name,
+        # About section
+        "about_heading": config.web.about_heading,
+        "about_text": config.web.about_text,
+        "about_footer": config.web.about_footer,
     }
 
 

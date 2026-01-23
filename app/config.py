@@ -87,6 +87,10 @@ class WebConfig(BaseModel):
     favicon: str = env_str("FAVICON", "/static/groundwave-favicon.svg")
     logo_large: str = env_str("LOGO_LARGE", "/static/groundwave-logo.svg")
     logo_small: str = env_str("LOGO_SMALL", "/static/groundwave-icon.svg")
+    # About section on homepage (customizable per deployment)
+    about_heading: str = "Built for Reliability"
+    about_text: str = "A platform with useful services that work without terrestrial internet. Local AI, offline weather data, and resilient connectivity. No cloud dependencies, no data harvesting."
+    about_footer: str = ""  # Optional, e.g., "AI powered by Llama 3"
 
 
 class BBSBoard(BaseModel):

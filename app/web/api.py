@@ -512,6 +512,9 @@ class BrandingConfigRequest(BaseModel):
     location_name: Optional[str] = None
     bot_short_name: Optional[str] = None
     bot_long_name: Optional[str] = None
+    about_heading: Optional[str] = None
+    about_text: Optional[str] = None
+    about_footer: Optional[str] = None
 
 
 class MeshConfigRequest(BaseModel):
@@ -644,6 +647,12 @@ async def update_branding_config(request: Request, data: BrandingConfigRequest):
         cfg['web']['community_description'] = data.community_description
     if data.location_name is not None:
         cfg['web']['location_name'] = data.location_name
+    if data.about_heading is not None:
+        cfg['web']['about_heading'] = data.about_heading
+    if data.about_text is not None:
+        cfg['web']['about_text'] = data.about_text
+    if data.about_footer is not None:
+        cfg['web']['about_footer'] = data.about_footer
     
     # Update mesh section for bot name
     if 'mesh' not in cfg:

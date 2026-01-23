@@ -69,17 +69,17 @@
         </div>
     </div>
     
-    <!-- Offline First -->
+    <!-- About Section -->
     <div class="mt-10 sm:mt-16 glass rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center">
-        <h2 class="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">Built for Reliability</h2>
+        <h2 class="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">{{ about_heading }}</h2>
         <p class="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto px-2">
-            We're building a platform with useful services that work without terrestrial internet. 
-            Local AI, satellite and local weather data, and Starlink connectivity for more reliable 
-            access to clearweb services. No cloud dependencies, no data harvesting.
+            {{ about_text }}
         </p>
+        {% if about_footer %}
         <p class="text-xs text-gray-500 mt-4">
-            AI powered by <a href="https://platform.openai.com/docs/models/gpt-oss-120b" target="_blank" class="text-mesh-400 hover:text-mesh-300">GPT-OSS-120B</a>
+            {{ about_footer }}
         </p>
+        {% endif %}
     </div>
     
     <!-- Resources -->
