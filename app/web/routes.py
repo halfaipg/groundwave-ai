@@ -179,8 +179,9 @@ async def map_page(request: Request):
     # Pass my node ID for highlighting
     context["my_node_id"] = app_state.mesh.my_node_id if app_state.mesh else None
     
-    # Pass bot name for "Your Node" label
-    context["bot_name"] = config.mesh.bot_short_name or config.mesh.bot_name
+    # Pass community name and bot name for "Your Node" label
+    bot_name = config.mesh.bot_short_name or config.mesh.bot_name
+    context["node_label"] = f"{config.web.community_name} - {bot_name}" if bot_name else config.web.community_name
     
     return templates.TemplateResponse("map.html", context)
 

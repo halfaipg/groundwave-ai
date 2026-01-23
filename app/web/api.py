@@ -175,28 +175,31 @@ async def get_nodes():
 
 @api_router.get("/stats/top")
 async def get_top_talkers(limit: int = Query(default=20, le=100)):
-    """Get top nodes by message count."""
+    """Get top nodes by message count in last 24 hours."""
     from datetime import datetime, timedelta
     from sqlalchemy import func, and_
+    from sqlalchemy.future import select
+    from ..database import Message
+    from ..main import app_state
     
-    # Get messages from last 24 hours using efficient query
     since = datetime.utcnow() - timedelta(hours=24)
     
-    async with await db.get_session() as session:
-        # Count messages per node in last 24h
-        from ..database import Message
-        query = (
-            select(Message.from_id, Message.from_name, func.count(Message.id).label('count'))
-            .where(and_(Message.timestamp >= since, Message.from_id.isnot(None)))
-            .group_by(Message.from_id, Message.from_name)
-            .order_by(func.count(Message.id).desc())
-            .limit(limit)
-        )
-        result = await session.execute(query)
-        rows = result.all()
+    try:
+        async with await db.get_session() as session:
+            query = (
+                select(Message.from_id, Message.from_name, func.count(Message.id).label('count'))
+                .where(and_(Message.timestamp >= since, Message.from_id.isnot(None)))
+                .group_by(Message.from_id, Message.from_name)
+                .order_by(func.count(Message.id).desc())
+                .limit(limit)
+            )
+            result = await session.execute(query)
+            rows = result.all()
+    except Exception as e:
+        logger.error(f"Failed to get top talkers: {e}")
+        return {"nodes": [], "total": 0, "error": str(e)}
     
-    # Enrich with node info
-    from ..main import app_state
+    # Enrich with node info from live mesh
     nodes_list = []
     for row in rows:
         node_info = {
@@ -212,6 +215,7 @@ async def get_top_talkers(limit: int = Query(default=20, le=100)):
         if app_state.mesh:
             for node in app_state.mesh.get_all_nodes():
                 if str(node.node_id) == str(row.from_id):
+                    node_info["name"] = node.long_name or node.short_name or row.from_name or row.from_id
                     node_info["short_name"] = node.short_name
                     node_info["hardware"] = node.hardware
                     node_info["is_online"] = node.is_online
