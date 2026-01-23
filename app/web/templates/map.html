@@ -192,25 +192,11 @@
         </p>
     </div>
     
-    <!-- Map Stats -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <div class="glass rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-green-400" id="local-count">0</div>
-            <div class="text-xs text-gray-400 mt-1">Local Nodes</div>
-        </div>
-        <div class="glass rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-blue-400" id="regional-count">0</div>
-            <div class="text-xs text-gray-400 mt-1">Regional MQTT</div>
-        </div>
-        <div class="glass rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-emerald-400" id="online-count">0</div>
-            <div class="text-xs text-gray-400 mt-1">Online Now</div>
-        </div>
-        <div class="glass rounded-xl p-4 text-center">
-            <div class="text-2xl font-bold text-amber-400" id="with-gps-count">0</div>
-            <div class="text-xs text-gray-400 mt-1">With Position</div>
-        </div>
-    </div>
+    <!-- Hidden stat counters for JS -->
+    <div id="local-count" class="hidden">0</div>
+    <div id="regional-count" class="hidden">0</div>
+    <div id="online-count" class="hidden">0</div>
+    <div id="with-gps-count" class="hidden">0</div>
     
     <!-- Map Container -->
     <div class="glass rounded-2xl p-2 mb-4 overflow-hidden">
