@@ -61,16 +61,15 @@ If you're starting fresh, consider waiting for MeshCore support or running both 
 - **Admin Panel** — Configure everything from your browser
 - **Mobile Friendly** — Responsive design for all devices
 
-<details>
-<summary>View Screenshots</summary>
+![Status Page](docs/screenshots/status.png)
 
-**Status Page**
-![Status](docs/screenshots/status.png)
+### Network Map
+- **Live Node Locations** — See where nodes are on the map
+- **Multiple Sources** — Local mesh and regional MQTT nodes
+- **Distance Measurement** — Click to measure between points
+- **Style Toggle** — Switch between detailed and flat map views
 
-**Network Map**
-![Map](docs/screenshots/map.png)
-
-</details>
+![Network Map](docs/screenshots/map.png)
 
 ### Regional MQTT (Optional)
 - Connect to regional Meshtastic MQTT servers
